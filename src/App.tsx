@@ -18,6 +18,7 @@ import { advancedSystemFiles } from './data/advancedSystem';
 import { uiComponents } from './data/uiComponents';
 import { uiPolish } from './data/uiPolish';
 import { deploymentFiles } from './data/deploymentFiles';
+import { spamProtectionFiles } from './data/spamProtection';
 import { AdminPanelPreview } from './components/AdminPreview';
 import {
   FolderTree,
@@ -39,7 +40,7 @@ import {
   LayoutDashboard,
 } from 'lucide-react';
 
-type Tab = 'structure' | 'database' | 'code' | 'admin' | 'crud' | 'frontend' | 'advanced' | 'ui' | 'deployment';
+type Tab = 'structure' | 'database' | 'code' | 'admin' | 'crud' | 'frontend' | 'advanced' | 'ui' | 'deployment' | 'security';
 
 interface TreeNode {
   name: string;
@@ -1182,6 +1183,222 @@ function DeploymentView() {
   );
 }
 
+function SecurityView() {
+  const [selectedCategory, setSelectedCategory] = useState('Core');
+  const [selectedFile, setSelectedFile] = useState(spamProtectionFiles[0]?.path || '');
+
+  const categories = useMemo(() => {
+    const cats = new Set(spamProtectionFiles.map(f => f.category));
+    return Array.from(cats);
+  }, []);
+
+  const categoryFiles = spamProtectionFiles.filter(f => f.category === selectedCategory);
+  const currentFile = spamProtectionFiles.find(f => f.path === selectedFile) || categoryFiles[0];
+
+  const categoryDescriptions: Record<string, string> = {
+    'Core': 'SpamGuard orchestrator + Captcha implementation',
+    'Helpers': 'Helper functions for form protection',
+    'Admin': 'Spam center controller with 7 tabs',
+    'Views': 'Admin spam center UI + test harness',
+    'Components': 'Reusable form protection partial',
+    'Assets': 'Client-side JavaScript protection',
+    'Database': 'Database schema for spam system',
+  };
+
+  const layers = [
+    { num: 1, name: 'Honeypot Fields', icon: '🍯', desc: 'Invisible trap fields that bots fill' },
+    { num: 2, name: 'Time-Based Protection', icon: '⏱️', desc: 'Reject submissions < 3 seconds' },
+    { num: 3, name: 'CSRF Token', icon: '🔐', desc: 'One-time use tokens per form' },
+    { num: 4, name: 'Rate Limiting', icon: '🚦', desc: 'Per IP/session/email limits' },
+    { num: 5, name: 'Content Analysis', icon: '🔍', desc: 'Spam keyword detection + scoring' },
+    { num: 6, name: 'Email Validation', icon: '📧', desc: 'MX check + disposable blocklist' },
+    { num: 7, name: 'reCAPTCHA', icon: '🤖', desc: 'Google reCAPTCHA v2/v3' },
+    { num: 8, name: 'Math Captcha', icon: '🧮', desc: 'Fallback math challenge' },
+    { num: 9, name: 'IP & Geo Intelligence', icon: '🌐', desc: 'Block bad IPs/countries' },
+    { num: 10, name: 'Email Headers', icon: '📬', desc: 'X-Spam-Score headers' },
+    { num: 11, name: 'Spam Queue', icon: '📋', desc: 'Admin review system' },
+    { num: 12, name: 'Form-Specific', icon: '🎯', desc: 'Per-form hardening rules' },
+  ];
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div>
+        <h2 className="text-2xl font-bold text-white">🛡️ Comprehensive Spam Protection</h2>
+        <p className="text-slate-400 mt-1">12-layer defense-in-depth system protecting ALL public forms</p>
+      </div>
+
+      {/* 12 Layers Visualization */}
+      <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 border border-slate-700 rounded-xl p-6">
+        <h3 className="text-lg font-semibold text-white mb-4">🎯 12 Defense Layers</h3>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+          {layers.map(layer => (
+            <div key={layer.num} className="bg-slate-800/50 border border-slate-700 rounded-lg p-3 hover:border-blue-500/50 transition-colors">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-xl">{layer.icon}</span>
+                <span className="text-xs font-mono text-blue-400">L{layer.num}</span>
+              </div>
+              <h4 className="text-sm font-semibold text-white">{layer.name}</h4>
+              <p className="text-xs text-slate-400 mt-1">{layer.desc}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Protected Forms */}
+      <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
+        <h3 className="text-lg font-semibold text-white mb-4">📝 Protected Forms</h3>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+          {[
+            'Contact Form', 'Product Inquiry', 'Custom Development', 'Newsletter Subscribe',
+            'Blog Comments', 'Careers Application', 'Book Demo', 'Get Quote',
+            'Service Inquiry', 'Support Request', 'Feedback Form', 'Registration',
+          ].map(form => (
+            <div key={form} className="flex items-center gap-2 p-2 bg-slate-900/50 rounded-lg">
+              <Check size={14} className="text-green-400 flex-shrink-0" />
+              <span className="text-sm text-slate-300">{form}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Category Grid */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
+        {categories.map(cat => {
+          const count = spamProtectionFiles.filter(f => f.category === cat).length;
+          return (
+            <button
+              key={cat}
+              onClick={() => { setSelectedCategory(cat); setSelectedFile(spamProtectionFiles.find(f => f.category === cat)?.path || ''); }}
+              className={`p-3 rounded-xl border text-left transition-all ${
+                selectedCategory === cat
+                  ? 'bg-blue-600/20 border-blue-500/50 text-blue-300'
+                  : 'bg-slate-800/50 border-slate-700 text-slate-400 hover:border-slate-600 hover:text-slate-200'
+              }`}
+            >
+              <div className="text-lg font-bold">{count}</div>
+              <div className="text-xs truncate">{cat}</div>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Category Detail */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        {/* File List */}
+        <div className="lg:col-span-1 bg-slate-800/50 border border-slate-700 rounded-xl p-4">
+          <h3 className="text-sm font-semibold text-blue-400 mb-1">{selectedCategory}</h3>
+          <p className="text-xs text-slate-500 mb-3">{categoryDescriptions[selectedCategory] || ''}</p>
+          <div className="space-y-1">
+            {categoryFiles.map(file => (
+              <button
+                key={file.path}
+                onClick={() => setSelectedFile(file.path)}
+                className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
+                  selectedFile === file.path
+                    ? 'bg-blue-600/20 text-blue-300 border border-blue-500/30'
+                    : 'text-slate-400 hover:bg-slate-700/50 hover:text-slate-200'
+                }`}
+              >
+                <div className="font-mono text-xs truncate">{file.name}</div>
+                <div className="text-xs text-slate-500 truncate mt-0.5">{file.description}</div>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Code Display */}
+        <div className="lg:col-span-3 fade-in">
+          {currentFile && (
+            <div className="space-y-3">
+              <div>
+                <h3 className="text-lg font-semibold text-white">{currentFile.name}</h3>
+                <p className="text-sm text-slate-400 mt-1">{currentFile.description}</p>
+                <p className="text-xs text-slate-500 mt-1 font-mono">{currentFile.path}</p>
+              </div>
+              <CodeBlock code={currentFile.content} filename={currentFile.name} language={currentFile.language} />
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Usage Example */}
+      <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
+        <h3 className="text-lg font-semibold text-white mb-4">💡 Usage Example</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <h4 className="text-sm font-semibold text-blue-400 mb-2">In Form View:</h4>
+            <CodeBlock
+              code={`<?php require APP_PATH . '/views/components/form-protection.php'; ?>
+
+<form method="POST" action="/contact">
+    <?= spam_field('contact') ?>
+    <?= captcha_field() ?>
+    
+    <input type="text" name="name" required>
+    <input type="email" name="email" required>
+    <textarea name="message" required></textarea>
+    
+    <button type="submit">Send</button>
+</form>`}
+              filename="contact-form.php"
+              language="php"
+            />
+          </div>
+          <div>
+            <h4 className="text-sm font-semibold text-blue-400 mb-2">In Controller:</h4>
+            <CodeBlock
+              code={`public function submitContact(): void
+{
+    // Run all 12 spam checks
+    $result = spam_check('contact', $_POST);
+    
+    if (!$result['passed']) {
+        // Silent failure (don't reveal detection)
+        flash('success', 'Message sent!');
+        $this->redirect('/contact');
+        return;
+    }
+    
+    // Process legitimate submission
+    $this->saveContactMessage($_POST);
+    flash('success', 'Message sent!');
+    $this->redirect('/contact');
+}`}
+              filename="ContactController.php"
+              language="php"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Admin Spam Center Features */}
+      <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
+        <h3 className="text-lg font-semibold text-white mb-4">🎛️ Admin Spam Center (7 Tabs)</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+          {[
+            { icon: '🚩', title: 'Flagged Submissions', desc: 'Review spam, mark safe, block IP' },
+            { icon: '🌐', title: 'Blocked IPs', desc: 'Manual block/unblock with reasons' },
+            { icon: '📧', title: 'Blocked Emails', desc: 'Email/domain blacklist' },
+            { icon: '🔑', title: 'Spam Keywords', desc: 'Add/edit/toggle keywords + weights' },
+            { icon: '🗑️', title: 'Disposable Domains', desc: '200+ pre-seeded, editable' },
+            { icon: '⏱️', title: 'Rate Limits', desc: 'View active blocks + retry times' },
+            { icon: '📊', title: 'Statistics', desc: 'Charts, top IPs, top keywords, by form' },
+          ].map(tab => (
+            <div key={tab.title} className="flex items-start gap-3 p-3 bg-slate-900/50 rounded-lg">
+              <span className="text-2xl">{tab.icon}</span>
+              <div>
+                <h4 className="text-sm font-semibold text-white">{tab.title}</h4>
+                <p className="text-xs text-slate-400 mt-1">{tab.desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function App() {
   const [activeTab, setActiveTab] = useState<Tab>('admin');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -1197,6 +1414,7 @@ function App() {
     { id: 'advanced' as Tab, label: 'Advanced Features', icon: Server },
     { id: 'ui' as Tab, label: 'UI Components', icon: Check },
     { id: 'deployment' as Tab, label: 'Deployment', icon: Download },
+    { id: 'security' as Tab, label: 'Spam Protection', icon: Shield },
   ];
 
   const features = [
@@ -1367,6 +1585,7 @@ function App() {
         {activeTab === 'advanced' && <AdvancedFeaturesView />}
         {activeTab === 'ui' && <UIComponentsView />}
         {activeTab === 'deployment' && <DeploymentView />}
+        {activeTab === 'security' && <SecurityView />}
       </main>
 
       {/* Footer */}

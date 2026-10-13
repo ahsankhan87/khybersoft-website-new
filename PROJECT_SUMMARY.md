@@ -15,6 +15,7 @@ A production-ready PHP 8.2 MVC framework with complete admin panel and public fr
 - **Advanced Features**: 12 production-grade systems
 - **UI Components**: 25+ reusable components
 - **Deployment Files**: Installation wizard, cron jobs, security configs
+- **Spam Protection**: 12-layer defense-in-depth system
 - **Runtime**: PHP 8.2+
 - **Database**: MySQL 8.0+
 - **Frontend**: TailwindCSS + Alpine.js + AOS
@@ -406,6 +407,256 @@ A production-ready PHP 8.2 MVC framework with complete admin panel and public fr
 ✅ **File upload validation** (MIME, size, dimensions)  
 
 ---
+
+## 🛡️ Comprehensive Spam Protection (12 Layers)
+
+Defense-in-depth system protecting ALL public forms with multiple overlapping layers.
+
+### Layer 1: Honeypot Fields 🍯
+✅ **Two invisible trap fields** per form (rotated names per session)  
+✅ **Silent rejection** - fake success message, no detection revealed  
+✅ **Session-based rotation** - bots can't learn field names  
+✅ **CSS-hidden** with `position:absolute; left:-9999px`  
+
+### Layer 2: Time-Based Protection ⏱️
+✅ **Minimum 3-second** submission time (bots are too fast)  
+✅ **Maximum 2-hour** session expiry (prevents replay attacks)  
+✅ **HMAC-encrypted timestamp** token (`_t` field)  
+✅ **Tamper detection** - invalid tokens rejected  
+
+### Layer 3: CSRF Token 🔐
+✅ **One-time use** tokens per form render  
+✅ **Regenerated** after successful submission  
+✅ **Strict validation** - missing/invalid/expired rejected  
+
+### Layer 4: Rate Limiting 🚦
+✅ **Per-form per-IP per-hour**: Max 3 submissions  
+✅ **Per-IP total per-hour**: Max 5 submissions  
+✅ **Per-email per-day**: Max 2 submissions  
+✅ **Per-session total**: Max 10 submissions  
+✅ **Configurable thresholds** in admin settings  
+✅ **Auto-blocking** with countdown timer shown to user  
+✅ **Database-backed** rate_limits table with expiry  
+
+### Layer 5: Content Analysis 🔍
+✅ **30+ spam keywords** (viagra, casino, crypto, SEO, etc.)  
+✅ **Configurable weights** (10-40 points per keyword)  
+✅ **Excessive links detection** (>2 URLs = +20 points)  
+✅ **ALL CAPS detection** (>70% uppercase = +15 points)  
+✅ **Gibberish detection** (words without vowels = +25 points)  
+✅ **Non-Latin character detection** (Cyrillic/Arabic in English forms)  
+✅ **Score-based threshold** (default 60/100 = spam)  
+✅ **Admin-editable** keyword list with weights  
+
+### Layer 6: Email Validation 📧
+✅ **Format validation** (FILTER_VALIDATE_EMAIL)  
+✅ **DNS MX record check** (reject domains with no MX)  
+✅ **200+ disposable domains** pre-seeded (mailinator, tempmail, etc.)  
+✅ **Fake pattern detection** (test@test.com, admin@admin.com)  
+✅ **Blocked email/domain list** (admin-managed)  
+✅ **Configurable checks** (MX, disposable, patterns)  
+
+### Layer 7: reCAPTCHA (Google) 🤖
+✅ **reCAPTCHA v3** (invisible, score-based, recommended)  
+✅ **reCAPTCHA v2** (checkbox fallback)  
+✅ **Configurable threshold** (default 0.5 for v3)  
+✅ **Graceful degradation** - if Google API down, allow through (v3) or show error (v2)  
+✅ **Site key + secret key** in admin settings  
+✅ **Works alongside** honeypot + timing (defense in depth)  
+
+### Layer 8: Math Captcha (Fallback) 🧮
+✅ **Simple math challenges** (7 + 3 = ?)  
+✅ **Session-stored answers** (hashed for security)  
+✅ **10-minute expiry**  
+✅ **One-time use** (cleared after verification)  
+✅ **Privacy-friendly** alternative to reCAPTCHA  
+✅ **Configurable** - can disable reCAPTCHA and use math only  
+
+### Layer 9: IP & Geo Intelligence 🌐
+✅ **blocked_ips table** with reason + expiry  
+✅ **Auto-block after N spam** (configurable, default 3)  
+✅ **Country blocking** (optional, from settings)  
+✅ **IP whitelist** (your office, staff)  
+✅ **GeoIP lookup** via ipapi.co (cached 7 days)  
+✅ **Permanent or temporary** blocks  
+
+### Layer 10: Email Header Analysis 📬
+✅ **X-Spam-Score header** added to outgoing emails  
+✅ **X-Form-IP, X-Form-Time** headers for debugging  
+✅ **Hidden meta info** in email body  
+✅ **High-score spam** saved to DB but not emailed to admin  
+✅ **Spam folder** in admin for review  
+
+### Layer 11: Spam Queue & Admin Review 📋
+✅ **7-tab admin interface**:
+  - 🚩 Flagged submissions (review, mark safe/spam, delete)
+  - 🌐 Blocked IPs (unblock, extend, add manually)
+  - 📧 Blocked emails/domains
+  - 🔑 Spam keywords (add, edit weight, toggle active)
+  - 🗑️ Disposable domains (200+ pre-seeded, editable)
+  - ⏱️ Rate limits (view active blocks)
+  - 📊 Statistics (daily chart, top IPs, top keywords, by form)
+✅ **Teach the system** - mark as "not spam" → whitelist sender  
+✅ **Bulk actions** - delete, block IP, mark safe  
+✅ **Real-time stats** - spam blocked per day, top offenders  
+
+### Layer 12: Form-Specific Hardening 🎯
+✅ **Newsletter**: Double opt-in (confirmation email with token)  
+✅ **Contact form**: Require phone + reason dropdown  
+✅ **Comments**: Moderation queue + Akismet-style checks  
+✅ **Careers**: Require resume upload (specific file types)  
+✅ **Product inquiry**: Require product selection (not free text)  
+✅ **Configurable rules** per form in admin settings  
+
+---
+
+### Spam Protection Files
+
+#### Core Classes
+- ✅ `app/core/SpamGuard.php` - Main orchestrator (all 12 layers)
+- ✅ `app/core/Captcha.php` - reCAPTCHA v2/v3 + math captcha
+
+#### Helpers
+- ✅ `app/helpers/spam.php` - `spam_field()`, `captcha_field()`, `spam_check()`
+
+#### Admin
+- ✅ `app/controllers/admin/SpamController.php` - 7-tab spam center
+- ✅ `app/views/admin/spam/index.php` - Main spam center UI
+- ✅ `app/views/admin/spam/test.php` - Test harness (simulate spam)
+
+#### Components
+- ✅ `app/views/components/form-protection.php` - Reusable form fields partial
+
+#### Assets
+- ✅ `assets/js/form-protection.js` - Client-side timing + double-submit prevention
+
+#### Database
+- ✅ `database/migrations/spam_tables.sql` - 7 tables + seed data (30 keywords, 200+ disposable domains)
+
+---
+
+### Usage Pattern
+
+**In any form view:**
+```php
+<?= spam_field('contact') ?>     <!-- honeypot + timing + CSRF -->
+<?= captcha_field() ?>           <!-- reCAPTCHA or math -->
+```
+
+**In controller:**
+```php
+$result = spam_check('contact', $_POST);
+if (!$result['passed']) {
+    // Silent fake success (don't reveal detection)
+    flash('success', 'Message sent!');
+    $this->redirect('/contact');
+    return;
+}
+// Process legitimate submission
+```
+
+---
+
+### Admin Settings (Security Tab)
+
+- ✅ Enable reCAPTCHA (toggle + keys + version + threshold)
+- ✅ Enable math captcha fallback
+- ✅ Spam score threshold (slider 0-100, default 60)
+- ✅ Content analysis threshold (default 40)
+- ✅ Auto-block IP after N spam reports (default 3)
+- ✅ Rate limit rules (editable numbers)
+- ✅ Enable content analysis (toggle)
+- ✅ Enable disposable email blocking (toggle)
+- ✅ Enable DNS MX check (toggle)
+- ✅ Enable country blocking (toggle + country list)
+- ✅ IP whitelist (JSON array)
+- ✅ Notification email on new spam (toggle)
+
+---
+
+### Test Harness
+
+**Admin-only test page** (`/admin/spam/test`) to verify each layer:
+
+- ✅ **Legitimate submission** - Should pass all checks
+- ✅ **Honeypot filled** - Should be blocked (score 100)
+- ✅ **Too fast submit** - Should be blocked (< 3 seconds)
+- ✅ **Spam keywords** - Should be flagged (score based on keywords)
+- ✅ **Disposable email** - Should be blocked (mailinator.com)
+- ✅ **Excessive links** - Should be flagged (> 2 URLs)
+- ✅ **ALL CAPS** - Should be flagged (> 70% uppercase)
+- ✅ **Rate limited** - Should be blocked after N submissions
+
+**Results show:**
+- Pass/fail for each layer
+- Total spam score (0-100)
+- Detection reasons with scores
+- Layer-by-layer breakdown
+
+---
+
+### Database Tables (7)
+
+1. **form_submissions** - All submissions (spam or not) with score + reasons
+2. **rate_limits** - Active rate limit blocks with expiry
+3. **blocked_ips** - IP blacklist with reason + expiry
+4. **blocked_emails** - Email/domain blacklist
+5. **spam_keywords** - Keyword list with weights (30+ seeded)
+6. **disposable_domains** - Disposable email domains (200+ seeded)
+7. **spam_logs** - Detailed per-layer logs for debugging
+
+---
+
+### Statistics & Analytics
+
+**Dashboard shows:**
+- Today's spam vs total submissions
+- Blocked IPs count
+- Blocked emails count
+- 30-day daily chart (total vs spam)
+- Top spam IPs (last 7 days)
+- Top triggered keywords
+- Submissions by form (with spam rate %)
+
+---
+
+### Key Features
+
+✅ **Defense in depth** - 12 overlapping layers  
+✅ **Silent failure** - Bots don't know they're detected  
+✅ **Teachable** - Mark as "not spam" → whitelist sender  
+✅ **Configurable** - All thresholds editable in admin  
+✅ **Scalable** - Database-backed, indexed queries  
+✅ **Privacy-friendly** - Math captcha option (no Google)  
+✅ **Graceful degradation** - Works even if external APIs down  
+✅ **Comprehensive logging** - Every layer trigger logged  
+✅ **Admin review** - Full spam center with 7 tabs  
+✅ **Test harness** - Verify each layer works  
+✅ **Auto-blocking** - IPs auto-blocked after N spam  
+✅ **Rate limiting** - Configurable per-form/IP/email/session  
+✅ **Content analysis** - Keyword detection + scoring  
+✅ **Email validation** - MX check + disposable blocklist  
+✅ **Geo intelligence** - Country blocking + IP whitelist  
+
+---
+
+### Protected Forms (All Public Forms)
+
+- ✅ Contact form
+- ✅ Product inquiry (Book Demo, Get Quote)
+- ✅ Custom development request
+- ✅ Newsletter subscribe
+- ✅ Blog comments
+- ✅ Careers application
+- ✅ Book demo form
+- ✅ Service inquiry
+- ✅ Support request
+- ✅ Feedback form
+- ✅ Registration
+- ✅ Any other public form
+
+---
+
 
 ## 🎨 UI Component Library
 
