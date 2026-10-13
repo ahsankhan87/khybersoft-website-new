@@ -1,6 +1,8 @@
 import { useState, useMemo } from 'react';
 import { phpFiles } from './data/phpFiles';
+import { adminPhpFiles } from './data/adminFiles';
 import { databaseSchema } from './data/schema';
+import { AdminPanelPreview } from './components/AdminPreview';
 import {
   FolderTree,
   Database,
@@ -17,9 +19,11 @@ import {
   X,
   Download,
   ExternalLink,
+  Lock,
+  LayoutDashboard,
 } from 'lucide-react';
 
-type Tab = 'structure' | 'database' | 'code';
+type Tab = 'structure' | 'database' | 'code' | 'admin';
 
 interface TreeNode {
   name: string;
@@ -77,6 +81,8 @@ function buildFileTree(): TreeNode[] {
             { name: 'Auth.php', path: 'app/core/Auth.php', type: 'file', description: 'Authentication' },
             { name: 'Validator.php', path: 'app/core/Validator.php', type: 'file', description: 'Input Validation' },
             { name: 'CSRF.php', path: 'app/core/CSRF.php', type: 'file', description: 'CSRF Protection' },
+            { name: 'RateLimiter.php', path: 'app/core/RateLimiter.php', type: 'file', description: 'Rate Limiting' },
+            { name: 'TOTP.php', path: 'app/core/TOTP.php', type: 'file', description: '2FA TOTP' },
           ],
         },
         {
@@ -122,8 +128,15 @@ function buildFileTree(): TreeNode[] {
           path: 'app/views',
           type: 'folder',
           children: [
-            { name: 'layouts/', path: 'app/views/layouts', type: 'folder', children: [] },
-            { name: 'admin/', path: 'app/views/admin', type: 'folder', children: [] },
+            { name: 'layouts/', path: 'app/views/layouts', type: 'folder', children: [
+              { name: 'admin.main.php', path: 'app/views/layouts/admin.main.php', type: 'file' },
+            ] },
+            { name: 'admin/', path: 'app/views/admin', type: 'folder', children: [
+              { name: 'auth/', path: 'app/views/admin/auth', type: 'folder', children: [
+                { name: 'login.php', path: 'app/views/admin/auth/login.php', type: 'file' },
+              ] },
+              { name: 'dashboard.php', path: 'app/views/admin/dashboard.php', type: 'file' },
+            ] },
             { name: 'front/', path: 'app/views/front', type: 'folder', children: [] },
           ],
         },
@@ -142,6 +155,8 @@ function buildFileTree(): TreeNode[] {
           children: [
             { name: 'AuthMiddleware.php', path: 'app/middleware/AuthMiddleware.php', type: 'file' },
             { name: 'AdminMiddleware.php', path: 'app/middleware/AdminMiddleware.php', type: 'file' },
+            { name: 'AdminAuth.php', path: 'app/middleware/AdminAuth.php', type: 'file' },
+            { name: 'Permission.php', path: 'app/middleware/Permission.php', type: 'file' },
             { name: 'PermissionMiddleware.php', path: 'app/middleware/PermissionMiddleware.php', type: 'file' },
             { name: 'GuestMiddleware.php', path: 'app/middleware/GuestMiddleware.php', type: 'file' },
           ],
@@ -154,6 +169,7 @@ function buildFileTree(): TreeNode[] {
       type: 'folder',
       children: [
         { name: 'web.php', path: 'routes/web.php', type: 'file', description: 'Route Definitions' },
+        { name: 'admin.php', path: 'routes/admin.php', type: 'file', description: 'Admin Routes' },
       ],
     },
     {
@@ -163,6 +179,16 @@ function buildFileTree(): TreeNode[] {
       children: [
         { name: 'logs/', path: 'storage/logs', type: 'folder', children: [] },
         { name: 'cache/', path: 'storage/cache', type: 'folder', children: [] },
+      ],
+    },
+    {
+      name: 'database/',
+      path: 'database',
+      type: 'folder',
+      children: [
+        { name: 'migrations/', path: 'database/migrations', type: 'folder', children: [
+          { name: 'password_resets.sql', path: 'database/migrations/password_resets.sql', type: 'file' },
+        ] },
       ],
     },
     { name: '.env.example', path: '.env.example', type: 'file', description: 'Environment Template' },
@@ -338,7 +364,8 @@ function StructureView() {
   const tree = useMemo(() => buildFileTree(), []);
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
 
-  const selectedFileData = phpFiles.find(f => f.path === selectedFile);
+  const allFiles = [...phpFiles, ...adminPhpFiles];
+  const selectedFileData = allFiles.find(f => f.path === selectedFile);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -368,6 +395,11 @@ function StructureView() {
               <h3 className="text-lg font-semibold text-white">{selectedFileData.name}</h3>
               <p className="text-sm text-slate-400 mt-1">{selectedFileData.description}</p>
               <p className="text-xs text-slate-500 mt-1 font-mono">{selectedFileData.path}</p>
+              {'category' in selectedFileData && (selectedFileData as typeof adminPhpFiles[number]).category && (
+                <span className="inline-block mt-2 px-2 py-0.5 text-xs bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded">
+                  {(selectedFileData as typeof adminPhpFiles[number]).category}
+                </span>
+              )}
             </div>
             <CodeBlock code={selectedFileData.content} filename={selectedFileData.name} language={selectedFileData.language} />
           </div>
@@ -386,14 +418,24 @@ function StructureView() {
 function CodeView() {
   const [selectedFile, setSelectedFile] = useState(phpFiles[0].path);
   const [searchTerm, setSearchTerm] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState<string>('all');
 
-  const filteredFiles = phpFiles.filter(f =>
-    f.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    f.path.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    f.description.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const allFiles = [...phpFiles, ...adminPhpFiles];
+  
+  const categories = useMemo(() => {
+    const cats = new Set(adminPhpFiles.map(f => f.category));
+    return ['all', ...Array.from(cats)];
+  }, []);
 
-  const currentFile = phpFiles.find(f => f.path === selectedFile) || phpFiles[0];
+  const filteredFiles = allFiles.filter(f => {
+    const matchesSearch = f.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      f.path.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      f.description.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory = categoryFilter === 'all' || ('category' in f && f.category === categoryFilter);
+    return matchesSearch && matchesCategory;
+  });
+
+  const currentFile = allFiles.find(f => f.path === selectedFile) || allFiles[0];
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
@@ -409,6 +451,24 @@ function CodeView() {
             className="w-full pl-8 pr-3 py-2 bg-slate-900 border border-slate-600 rounded-lg text-sm text-slate-300 placeholder-slate-500 focus:outline-none focus:border-blue-500"
           />
         </div>
+
+        {/* Category Filter */}
+        <div className="flex flex-wrap gap-1 mb-3">
+          {categories.map(cat => (
+            <button
+              key={cat}
+              onClick={() => setCategoryFilter(cat)}
+              className={`px-2 py-1 text-xs rounded transition-colors ${
+                categoryFilter === cat
+                  ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30'
+                  : 'text-slate-500 hover:text-slate-300 bg-slate-800'
+              }`}
+            >
+              {cat === 'all' ? 'All' : cat}
+            </button>
+          ))}
+        </div>
+
         <div className="space-y-1">
           {filteredFiles.map(file => (
             <button
@@ -433,6 +493,85 @@ function CodeView() {
           <h3 className="text-lg font-semibold text-white">{currentFile.name}</h3>
           <p className="text-sm text-slate-400 mt-1">{currentFile.description}</p>
           <p className="text-xs text-slate-500 mt-1 font-mono">{currentFile.path}</p>
+          {'category' in currentFile && (currentFile as typeof adminPhpFiles[number]).category && (
+            <span className="inline-block mt-2 px-2 py-0.5 text-xs bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded">
+              {(currentFile as typeof adminPhpFiles[number]).category}
+            </span>
+          )}
+        </div>
+        <CodeBlock code={currentFile.content} filename={currentFile.name} language={currentFile.language} />
+      </div>
+    </div>
+  );
+}
+
+function AdminCodeView() {
+  const [selectedFile, setSelectedFile] = useState(adminPhpFiles[0].path);
+  const [categoryFilter, setCategoryFilter] = useState<string>('all');
+
+  const categories = useMemo(() => {
+    const cats = new Set(adminPhpFiles.map(f => f.category));
+    return ['all', ...Array.from(cats)];
+  }, []);
+
+  const filteredFiles = adminPhpFiles.filter(f => 
+    categoryFilter === 'all' || f.category === categoryFilter
+  );
+
+  const currentFile = adminPhpFiles.find(f => f.path === selectedFile) || adminPhpFiles[0];
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+      {/* File List */}
+      <div className="lg:col-span-1 bg-slate-800/50 border border-slate-700 rounded-xl p-4 max-h-[80vh] overflow-y-auto">
+        <div className="flex flex-wrap gap-1 mb-3">
+          {categories.map(cat => (
+            <button
+              key={cat}
+              onClick={() => setCategoryFilter(cat)}
+              className={`px-2 py-1 text-xs rounded transition-colors ${
+                categoryFilter === cat
+                  ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30'
+                  : 'text-slate-500 hover:text-slate-300 bg-slate-800'
+              }`}
+            >
+              {cat === 'all' ? 'All' : cat}
+            </button>
+          ))}
+        </div>
+
+        <div className="space-y-1">
+          {filteredFiles.map(file => (
+            <button
+              key={file.path}
+              onClick={() => setSelectedFile(file.path)}
+              className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
+                selectedFile === file.path
+                  ? 'bg-blue-600/20 text-blue-300 border border-blue-500/30'
+                  : 'text-slate-400 hover:bg-slate-700/50 hover:text-slate-200'
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <span className="text-xs px-1.5 py-0.5 bg-slate-700 rounded text-slate-400">{file.category}</span>
+              </div>
+              <div className="font-mono text-xs truncate mt-1">{file.name}</div>
+              <div className="text-xs text-slate-500 truncate mt-0.5">{file.description}</div>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Code Display */}
+      <div className="lg:col-span-3 fade-in">
+        <div className="mb-4">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="px-2 py-0.5 text-xs bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded">
+              {currentFile.category}
+            </span>
+          </div>
+          <h3 className="text-lg font-semibold text-white">{currentFile.name}</h3>
+          <p className="text-sm text-slate-400 mt-1">{currentFile.description}</p>
+          <p className="text-xs text-slate-500 mt-1 font-mono">{currentFile.path}</p>
         </div>
         <CodeBlock code={currentFile.content} filename={currentFile.name} language={currentFile.language} />
       </div>
@@ -441,17 +580,19 @@ function CodeView() {
 }
 
 function App() {
-  const [activeTab, setActiveTab] = useState<Tab>('structure');
+  const [activeTab, setActiveTab] = useState<Tab>('admin');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [adminSubTab, setAdminSubTab] = useState<'preview' | 'code'>('preview');
 
   const tabs = [
     { id: 'structure' as Tab, label: 'Project Structure', icon: FolderTree },
     { id: 'database' as Tab, label: 'Database Schema', icon: Database },
     { id: 'code' as Tab, label: 'Source Code', icon: FileCode },
+    { id: 'admin' as Tab, label: 'Admin Panel', icon: LayoutDashboard },
   ];
 
   const features = [
-    { icon: Shield, title: 'Security First', desc: 'CSRF protection, password hashing, prepared statements, XSS prevention' },
+    { icon: Shield, title: 'Security First', desc: 'CSRF protection, password hashing, prepared statements, XSS prevention, rate limiting' },
     { icon: Server, title: 'PHP 8.2+', desc: 'Typed properties, strict_types, enums, readonly, fibers support' },
     { icon: Layout, title: 'Clean MVC', desc: 'Lightweight custom MVC with Router, Controllers, Models, and Views' },
     { icon: Database, title: 'MySQL 8', desc: 'InnoDB, foreign keys, JSON columns, indexes, utf8mb4_unicode_ci' },
@@ -528,13 +669,13 @@ function App() {
           <div className="text-center max-w-3xl mx-auto">
             <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-600/10 border border-blue-500/20 rounded-full text-blue-400 text-xs font-medium mb-4">
               <span className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></span>
-              Production-Ready Foundation
+              Production-Ready Foundation • Admin Panel Included
             </div>
             <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
-              Complete PHP 8.2 MVC Project
+              Complete PHP 8.2 MVC + Admin Panel
             </h2>
             <p className="text-slate-400 text-lg">
-              A production-grade, lightweight custom MVC framework for Khybersoft.
+              A production-grade, lightweight custom MVC framework with a premium admin panel.
               Built with security, performance, and scalability in mind.
             </p>
           </div>
@@ -553,7 +694,7 @@ function App() {
           {/* Stats */}
           <div className="flex flex-wrap justify-center gap-6 mt-8 text-center">
             <div>
-              <div className="text-2xl font-bold text-white">{phpFiles.length}</div>
+              <div className="text-2xl font-bold text-white">{phpFiles.length + adminPhpFiles.length}</div>
               <div className="text-xs text-slate-400">Source Files</div>
             </div>
             <div>
@@ -568,6 +709,10 @@ function App() {
               <div className="text-2xl font-bold text-white">MySQL 8</div>
               <div className="text-xs text-slate-400">Database</div>
             </div>
+            <div>
+              <div className="text-2xl font-bold text-white">2FA</div>
+              <div className="text-xs text-slate-400">TOTP Support</div>
+            </div>
           </div>
         </div>
       </section>
@@ -577,6 +722,38 @@ function App() {
         {activeTab === 'structure' && <StructureView />}
         {activeTab === 'database' && <DatabaseSchemaView />}
         {activeTab === 'code' && <CodeView />}
+        {activeTab === 'admin' && (
+          <div className="space-y-6">
+            {/* Admin Sub-tabs */}
+            <div className="flex items-center gap-2 border-b border-slate-700 pb-3">
+              <button
+                onClick={() => setAdminSubTab('preview')}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  adminSubTab === 'preview'
+                    ? 'bg-blue-600/20 text-blue-400'
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'
+                }`}
+              >
+                <LayoutDashboard size={16} />
+                Interactive Preview
+              </button>
+              <button
+                onClick={() => setAdminSubTab('code')}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  adminSubTab === 'code'
+                    ? 'bg-blue-600/20 text-blue-400'
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'
+                }`}
+              >
+                <FileCode size={16} />
+                Admin Source Code
+              </button>
+            </div>
+
+            {adminSubTab === 'preview' && <AdminPanelPreview />}
+            {adminSubTab === 'code' && <AdminCodeView />}
+          </div>
+        )}
       </main>
 
       {/* Footer */}
@@ -590,26 +767,46 @@ function App() {
               <span className="text-sm text-slate-400">Khybersoft MVC Foundation v1.0</span>
             </div>
             <div className="flex items-center gap-4 text-sm text-slate-500">
-              <span>PHP 8.2 • MySQL 8 • TailwindCSS</span>
+              <span>PHP 8.2 • MySQL 8 • TailwindCSS • Alpine.js</span>
               <a href="https://khybersoft.com" target="_blank" rel="noopener" className="flex items-center gap-1 text-blue-400 hover:text-blue-300">
                 khybersoft.com <ExternalLink size={12} />
               </a>
             </div>
           </div>
-          <div className="mt-6 p-4 bg-slate-900/50 border border-slate-700 rounded-lg">
-            <h4 className="text-sm font-semibold text-slate-300 mb-2 flex items-center gap-2">
-              <Download size={14} />
-              Deployment Instructions
-            </h4>
-            <ol className="text-xs text-slate-400 space-y-1 list-decimal list-inside">
-              <li>Upload all files to your cPanel hosting (public_html for webroot)</li>
-              <li>Create MySQL database and import the schema from Database Schema tab</li>
-              <li>Copy .env.example to .env and configure database credentials</li>
-              <li>Set proper permissions: storage/ and uploads/ need write access (755)</li>
-              <li>Ensure PHP 8.2+ is active in cPanel with PDO, mbstring, and JSON extensions</li>
-              <li>Set document root to public_html/ directory</li>
-              <li>Create a default super_admin user via SQL or a setup script</li>
-            </ol>
+          <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="p-4 bg-slate-900/50 border border-slate-700 rounded-lg">
+              <h4 className="text-sm font-semibold text-slate-300 mb-2 flex items-center gap-2">
+                <Download size={14} />
+                Deployment Instructions
+              </h4>
+              <ol className="text-xs text-slate-400 space-y-1 list-decimal list-inside">
+                <li>Upload all files to your cPanel hosting (public_html for webroot)</li>
+                <li>Create MySQL database and import the schema from Database Schema tab</li>
+                <li>Copy .env.example to .env and configure database credentials</li>
+                <li>Set proper permissions: storage/ and uploads/ need write access (755)</li>
+                <li>Ensure PHP 8.2+ is active in cPanel with PDO, mbstring, and JSON extensions</li>
+                <li>Set document root to public_html/ directory</li>
+                <li>Create a default super_admin user via SQL or a setup script</li>
+              </ol>
+            </div>
+            <div className="p-4 bg-slate-900/50 border border-slate-700 rounded-lg">
+              <h4 className="text-sm font-semibold text-slate-300 mb-2 flex items-center gap-2">
+                <Lock size={14} />
+                Security Features
+              </h4>
+              <ul className="text-xs text-slate-400 space-y-1 list-disc list-inside">
+                <li>CSRF token protection on all forms</li>
+                <li>Password hashing with bcrypt (cost 12)</li>
+                <li>PDO prepared statements (SQL injection prevention)</li>
+                <li>XSS prevention via htmlspecialchars output escaping</li>
+                <li>Rate limiting: 5 login attempts per 15 minutes</li>
+                <li>Session fixation prevention (ID regeneration)</li>
+                <li>Account lockout after 5 failed attempts</li>
+                <li>Optional TOTP two-factor authentication</li>
+                <li>Role-based access control (RBAC)</li>
+                <li>Security headers via .htaccess</li>
+              </ul>
+            </div>
           </div>
         </div>
       </footer>
