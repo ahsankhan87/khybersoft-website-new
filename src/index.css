@@ -1,1 +1,105 @@
 @import "tailwindcss";
+
+@theme {
+  --color-primary: #0f172a;
+  --color-accent: #3b82f6;
+  --color-accent-dark: #1d4ed8;
+  --color-surface: #1e293b;
+  --color-surface-light: #334155;
+  --color-border: #475569;
+  --color-text: #e2e8f0;
+  --color-text-muted: #94a3b8;
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-danger: #ef4444;
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', monospace;
+}
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 3px;
+}
+
+pre code {
+  font-family: 'JetBrains Mono', 'Fira Code', 'SF Mono', 'Cascadia Code', monospace;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.code-block {
+  background: #0d1117;
+  border: 1px solid #21262d;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.code-block pre {
+  padding: 1.25rem;
+  overflow-x: auto;
+  margin: 0;
+}
+
+.code-header {
+  background: #161b22;
+  border-bottom: 1px solid #21262d;
+  padding: 0.5rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Syntax highlighting */
+.token.comment, .token.prolog, .token.doctype, .token.cdata { color: #8b949e; }
+.token.punctuation { color: #c9d1d9; }
+.token.property, .token.tag, .token.boolean, .token.number, .token.constant, .token.symbol { color: #79c0ff; }
+.token.selector, .token.attr-name, .token.string, .token.char, .token.builtin { color: #a5d6ff; }
+.token.operator, .token.entity, .token.url { color: #79c0ff; }
+.token.atrule, .token.attr-value, .token.keyword { color: #ff7b72; }
+.token.function, .token.class-name { color: #d2a8ff; }
+.token.regex, .token.important, .token.variable { color: #ffa657; }
+
+.token.php-tag { color: #ff7b72; }
+.token.php-variable { color: #ffa657; }
+.token.php-function { color: #d2a8ff; }
+.token.php-keyword { color: #ff7b72; }
+.token.php-string { color: #a5d6ff; }
+.token.php-comment { color: #8b949e; }
+.token.php-class { color: #79c0ff; }
+.token.php-constant { color: #79c0ff; }
+
+.file-tree-item:hover {
+  background: rgba(59, 130, 246, 0.1);
+}
+
+.sidebar-item.active {
+  background: rgba(59, 130, 246, 0.15);
+  border-left: 3px solid #3b82f6;
+}
+
+.fade-in {
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}

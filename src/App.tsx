@@ -1,5 +1,620 @@
-export default function App() {
+import { useState, useMemo } from 'react';
+import { phpFiles } from './data/phpFiles';
+import { databaseSchema } from './data/schema';
+import {
+  FolderTree,
+  Database,
+  FileCode,
+  Copy,
+  Check,
+  ChevronRight,
+  ChevronDown,
+  Search,
+  Layout,
+  Shield,
+  Server,
+  Menu,
+  X,
+  Download,
+  ExternalLink,
+} from 'lucide-react';
+
+type Tab = 'structure' | 'database' | 'code';
+
+interface TreeNode {
+  name: string;
+  path: string;
+  type: 'file' | 'folder';
+  children?: TreeNode[];
+  description?: string;
+}
+
+function buildFileTree(): TreeNode[] {
+  return [
+    {
+      name: 'public_html/',
+      path: 'public_html',
+      type: 'folder',
+      children: [
+        { name: 'index.php', path: 'public_html/index.php', type: 'file', description: 'Front Controller' },
+        { name: '.htaccess', path: 'public_html/.htaccess', type: 'file', description: 'URL Rewriting & Security' },
+        {
+          name: 'assets/',
+          path: 'public_html/assets',
+          type: 'folder',
+          children: [
+            { name: 'css/', path: 'public_html/assets/css', type: 'folder', children: [] },
+            { name: 'js/', path: 'public_html/assets/js', type: 'folder', children: [] },
+            { name: 'images/', path: 'public_html/assets/images', type: 'folder', children: [] },
+          ],
+        },
+        { name: 'uploads/', path: 'public_html/uploads', type: 'folder', children: [] },
+      ],
+    },
+    {
+      name: 'app/',
+      path: 'app',
+      type: 'folder',
+      children: [
+        {
+          name: 'config/',
+          path: 'app/config',
+          type: 'folder',
+          children: [
+            { name: 'config.php', path: 'app/config/config.php', type: 'file', description: 'App Configuration' },
+            { name: 'database.php', path: 'app/config/database.php', type: 'file', description: 'DB Configuration' },
+          ],
+        },
+        {
+          name: 'core/',
+          path: 'app/core',
+          type: 'folder',
+          children: [
+            { name: 'Database.php', path: 'app/core/Database.php', type: 'file', description: 'PDO Singleton' },
+            { name: 'Router.php', path: 'app/core/Router.php', type: 'file', description: 'URL Router' },
+            { name: 'Controller.php', path: 'app/core/Controller.php', type: 'file', description: 'Base Controller' },
+            { name: 'Model.php', path: 'app/core/Model.php', type: 'file', description: 'Base Model' },
+            { name: 'Auth.php', path: 'app/core/Auth.php', type: 'file', description: 'Authentication' },
+            { name: 'Validator.php', path: 'app/core/Validator.php', type: 'file', description: 'Input Validation' },
+            { name: 'CSRF.php', path: 'app/core/CSRF.php', type: 'file', description: 'CSRF Protection' },
+          ],
+        },
+        {
+          name: 'controllers/',
+          path: 'app/controllers',
+          type: 'folder',
+          children: [
+            {
+              name: 'admin/',
+              path: 'app/controllers/admin',
+              type: 'folder',
+              children: [
+                { name: 'DashboardController.php', path: 'app/controllers/admin/DashboardController.php', type: 'file' },
+                { name: 'AuthController.php', path: 'app/controllers/admin/AuthController.php', type: 'file' },
+              ],
+            },
+            {
+              name: 'front/',
+              path: 'app/controllers/front',
+              type: 'folder',
+              children: [
+                { name: 'HomeController.php', path: 'app/controllers/front/HomeController.php', type: 'file' },
+                { name: 'ProductController.php', path: 'app/controllers/front/ProductController.php', type: 'file' },
+                { name: 'BlogController.php', path: 'app/controllers/front/BlogController.php', type: 'file' },
+              ],
+            },
+          ],
+        },
+        {
+          name: 'models/',
+          path: 'app/models',
+          type: 'folder',
+          children: [
+            { name: 'Product.php', path: 'app/models/Product.php', type: 'file' },
+            { name: 'BlogPost.php', path: 'app/models/BlogPost.php', type: 'file' },
+            { name: 'Testimonial.php', path: 'app/models/Testimonial.php', type: 'file' },
+            { name: 'Service.php', path: 'app/models/Service.php', type: 'file' },
+            { name: 'Client.php', path: 'app/models/Client.php', type: 'file' },
+          ],
+        },
+        {
+          name: 'views/',
+          path: 'app/views',
+          type: 'folder',
+          children: [
+            { name: 'layouts/', path: 'app/views/layouts', type: 'folder', children: [] },
+            { name: 'admin/', path: 'app/views/admin', type: 'folder', children: [] },
+            { name: 'front/', path: 'app/views/front', type: 'folder', children: [] },
+          ],
+        },
+        {
+          name: 'helpers/',
+          path: 'app/helpers',
+          type: 'folder',
+          children: [
+            { name: 'functions.php', path: 'app/helpers/functions.php', type: 'file' },
+          ],
+        },
+        {
+          name: 'middleware/',
+          path: 'app/middleware',
+          type: 'folder',
+          children: [
+            { name: 'AuthMiddleware.php', path: 'app/middleware/AuthMiddleware.php', type: 'file' },
+            { name: 'AdminMiddleware.php', path: 'app/middleware/AdminMiddleware.php', type: 'file' },
+            { name: 'PermissionMiddleware.php', path: 'app/middleware/PermissionMiddleware.php', type: 'file' },
+            { name: 'GuestMiddleware.php', path: 'app/middleware/GuestMiddleware.php', type: 'file' },
+          ],
+        },
+      ],
+    },
+    {
+      name: 'routes/',
+      path: 'routes',
+      type: 'folder',
+      children: [
+        { name: 'web.php', path: 'routes/web.php', type: 'file', description: 'Route Definitions' },
+      ],
+    },
+    {
+      name: 'storage/',
+      path: 'storage',
+      type: 'folder',
+      children: [
+        { name: 'logs/', path: 'storage/logs', type: 'folder', children: [] },
+        { name: 'cache/', path: 'storage/cache', type: 'folder', children: [] },
+      ],
+    },
+    { name: '.env.example', path: '.env.example', type: 'file', description: 'Environment Template' },
+  ];
+}
+
+function FileTreeItem({ node, depth = 0, onSelect, selectedPath }: {
+  node: TreeNode;
+  depth?: number;
+  onSelect: (path: string) => void;
+  selectedPath: string;
+}) {
+  const [expanded, setExpanded] = useState(depth < 2);
+  const isActive = node.path === selectedPath;
+
+  if (node.type === 'folder') {
+    return (
+      <div>
+        <button
+          onClick={() => setExpanded(!expanded)}
+          className="flex items-center gap-1.5 w-full px-2 py-1 text-left text-sm text-slate-300 hover:bg-slate-700/50 rounded transition-colors"
+          style={{ paddingLeft: `${depth * 16 + 8}px` }}
+        >
+          {expanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+          <span className="text-yellow-400">📁</span>
+          <span className="truncate">{node.name}</span>
+        </button>
+        {expanded && node.children && (
+          <div>
+            {node.children.map((child) => (
+              <FileTreeItem
+                key={child.path}
+                node={child}
+                depth={depth + 1}
+                onSelect={onSelect}
+                selectedPath={selectedPath}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
-    <div/>
+    <button
+      onClick={() => onSelect(node.path)}
+      className={`flex items-center gap-1.5 w-full px-2 py-1 text-left text-sm rounded transition-colors ${
+        isActive ? 'bg-blue-600/20 text-blue-300 border-l-2 border-blue-400' : 'text-slate-400 hover:bg-slate-700/50 hover:text-slate-200'
+      }`}
+      style={{ paddingLeft: `${depth * 16 + 24}px` }}
+    >
+      <span className="text-blue-400">📄</span>
+      <span className="truncate">{node.name}</span>
+    </button>
   );
 }
+
+function CodeBlock({ code, filename, language }: { code: string; filename: string; language: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(code);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div className="code-block">
+      <div className="code-header">
+        <div className="flex items-center gap-2">
+          <FileCode size={14} className="text-slate-400" />
+          <span className="text-sm text-slate-300 font-mono">{filename}</span>
+          <span className="text-xs text-slate-500 bg-slate-800 px-2 py-0.5 rounded">{language}</span>
+        </div>
+        <button
+          onClick={handleCopy}
+          className="flex items-center gap-1.5 px-2.5 py-1 text-xs bg-slate-700 hover:bg-slate-600 text-slate-300 rounded transition-colors"
+        >
+          {copied ? <Check size={12} className="text-green-400" /> : <Copy size={12} />}
+          {copied ? 'Copied!' : 'Copy'}
+        </button>
+      </div>
+      <pre className="overflow-x-auto">
+        <code className="text-slate-300">{code}</code>
+      </pre>
+    </div>
+  );
+}
+
+function DatabaseSchemaView() {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(databaseSchema);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const tables = useMemo(() => {
+    const matches = databaseSchema.match(/CREATE TABLE.*?`(\w+)`/g) || [];
+    return matches.map(m => m.match(/`(\w+)`/)?.[1] || '').filter(Boolean);
+  }, []);
+
+  const tableGroups = {
+    'Core': ['roles', 'permissions', 'role_permissions', 'users', 'settings', 'activity_logs', 'media'],
+    'Content': ['pages', 'menus', 'menu_items', 'blog_categories', 'blog_tags', 'blog_posts', 'blog_post_tags', 'blog_comments', 'testimonials', 'team_members', 'faqs'],
+    'Products': ['product_categories', 'products', 'product_plans', 'product_features', 'product_faqs', 'product_demos', 'product_inquiries', 'product_versions', 'tutorial_categories', 'tutorials'],
+    'Business': ['services', 'service_inquiries', 'contact_messages', 'newsletter_subscribers', 'custom_development_requests', 'clients'],
+    'SEO/System': ['seo_meta', 'redirects', 'testimonials_videos'],
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold text-white">MySQL Database Schema</h2>
+          <p className="text-slate-400 mt-1">{tables.length} tables • InnoDB • utf8mb4_unicode_ci • MySQL 8.0+</p>
+        </div>
+        <button
+          onClick={handleCopy}
+          className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors"
+        >
+          {copied ? <Check size={16} /> : <Copy size={16} />}
+          {copied ? 'Copied!' : 'Copy Schema'}
+        </button>
+      </div>
+
+      {/* Table Groups */}
+      <div className="grid gap-4">
+        {Object.entries(tableGroups).map(([group, groupTables]) => (
+          <div key={group} className="bg-slate-800/50 border border-slate-700 rounded-xl p-4">
+            <h3 className="text-lg font-semibold text-blue-400 mb-3 flex items-center gap-2">
+              <Database size={18} />
+              {group} ({groupTables.length} tables)
+            </h3>
+            <div className="flex flex-wrap gap-2">
+              {groupTables.map(table => (
+                <span key={table} className="px-2.5 py-1 bg-slate-700/50 border border-slate-600 rounded-md text-xs font-mono text-slate-300">
+                  {table}
+                </span>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Full Schema */}
+      <div className="code-block">
+        <div className="code-header">
+          <div className="flex items-center gap-2">
+            <Database size={14} className="text-slate-400" />
+            <span className="text-sm text-slate-300 font-mono">schema.sql</span>
+            <span className="text-xs text-slate-500 bg-slate-800 px-2 py-0.5 rounded">SQL</span>
+          </div>
+          <button
+            onClick={handleCopy}
+            className="flex items-center gap-1.5 px-2.5 py-1 text-xs bg-slate-700 hover:bg-slate-600 text-slate-300 rounded transition-colors"
+          >
+            {copied ? <Check size={12} className="text-green-400" /> : <Copy size={12} />}
+            {copied ? 'Copied!' : 'Copy'}
+          </button>
+        </div>
+        <pre className="overflow-x-auto max-h-[600px]">
+          <code className="text-slate-300">{databaseSchema}</code>
+        </pre>
+      </div>
+    </div>
+  );
+}
+
+function StructureView() {
+  const tree = useMemo(() => buildFileTree(), []);
+  const [selectedFile, setSelectedFile] = useState<string | null>(null);
+
+  const selectedFileData = phpFiles.find(f => f.path === selectedFile);
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* File Tree */}
+      <div className="lg:col-span-1 bg-slate-800/50 border border-slate-700 rounded-xl p-4 max-h-[80vh] overflow-y-auto">
+        <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wider mb-3 flex items-center gap-2">
+          <FolderTree size={16} />
+          Project Structure
+        </h3>
+        <div className="space-y-0.5">
+          {tree.map(node => (
+            <FileTreeItem
+              key={node.path}
+              node={node}
+              onSelect={setSelectedFile}
+              selectedPath={selectedFile || ''}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* File Content */}
+      <div className="lg:col-span-2">
+        {selectedFileData ? (
+          <div className="space-y-4 fade-in">
+            <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-4">
+              <h3 className="text-lg font-semibold text-white">{selectedFileData.name}</h3>
+              <p className="text-sm text-slate-400 mt-1">{selectedFileData.description}</p>
+              <p className="text-xs text-slate-500 mt-1 font-mono">{selectedFileData.path}</p>
+            </div>
+            <CodeBlock code={selectedFileData.content} filename={selectedFileData.name} language={selectedFileData.language} />
+          </div>
+        ) : (
+          <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-12 text-center">
+            <FolderTree size={48} className="text-slate-600 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-slate-400">Select a file</h3>
+            <p className="text-sm text-slate-500 mt-1">Click on any file in the tree to view its contents</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function CodeView() {
+  const [selectedFile, setSelectedFile] = useState(phpFiles[0].path);
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const filteredFiles = phpFiles.filter(f =>
+    f.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    f.path.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    f.description.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const currentFile = phpFiles.find(f => f.path === selectedFile) || phpFiles[0];
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+      {/* File List */}
+      <div className="lg:col-span-1 bg-slate-800/50 border border-slate-700 rounded-xl p-4 max-h-[80vh] overflow-y-auto">
+        <div className="relative mb-3">
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+          <input
+            type="text"
+            placeholder="Search files..."
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+            className="w-full pl-8 pr-3 py-2 bg-slate-900 border border-slate-600 rounded-lg text-sm text-slate-300 placeholder-slate-500 focus:outline-none focus:border-blue-500"
+          />
+        </div>
+        <div className="space-y-1">
+          {filteredFiles.map(file => (
+            <button
+              key={file.path}
+              onClick={() => setSelectedFile(file.path)}
+              className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
+                selectedFile === file.path
+                  ? 'bg-blue-600/20 text-blue-300 border border-blue-500/30'
+                  : 'text-slate-400 hover:bg-slate-700/50 hover:text-slate-200'
+              }`}
+            >
+              <div className="font-mono text-xs truncate">{file.name}</div>
+              <div className="text-xs text-slate-500 truncate mt-0.5">{file.description}</div>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Code Display */}
+      <div className="lg:col-span-3 fade-in">
+        <div className="mb-4">
+          <h3 className="text-lg font-semibold text-white">{currentFile.name}</h3>
+          <p className="text-sm text-slate-400 mt-1">{currentFile.description}</p>
+          <p className="text-xs text-slate-500 mt-1 font-mono">{currentFile.path}</p>
+        </div>
+        <CodeBlock code={currentFile.content} filename={currentFile.name} language={currentFile.language} />
+      </div>
+    </div>
+  );
+}
+
+function App() {
+  const [activeTab, setActiveTab] = useState<Tab>('structure');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const tabs = [
+    { id: 'structure' as Tab, label: 'Project Structure', icon: FolderTree },
+    { id: 'database' as Tab, label: 'Database Schema', icon: Database },
+    { id: 'code' as Tab, label: 'Source Code', icon: FileCode },
+  ];
+
+  const features = [
+    { icon: Shield, title: 'Security First', desc: 'CSRF protection, password hashing, prepared statements, XSS prevention' },
+    { icon: Server, title: 'PHP 8.2+', desc: 'Typed properties, strict_types, enums, readonly, fibers support' },
+    { icon: Layout, title: 'Clean MVC', desc: 'Lightweight custom MVC with Router, Controllers, Models, and Views' },
+    { icon: Database, title: 'MySQL 8', desc: 'InnoDB, foreign keys, JSON columns, indexes, utf8mb4_unicode_ci' },
+  ];
+
+  return (
+    <div className="min-h-screen bg-slate-900 text-slate-200">
+      {/* Header */}
+      <header className="bg-slate-800/80 backdrop-blur-sm border-b border-slate-700 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-sm">K</span>
+              </div>
+              <div>
+                <h1 className="text-lg font-bold text-white">Khybersoft</h1>
+                <p className="text-xs text-slate-400 -mt-0.5">PHP MVC Foundation</p>
+              </div>
+            </div>
+
+            {/* Desktop Nav */}
+            <nav className="hidden md:flex items-center gap-1">
+              {tabs.map(tab => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    activeTab === tab.id
+                      ? 'bg-blue-600/20 text-blue-400'
+                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'
+                  }`}
+                >
+                  <tab.icon size={16} />
+                  {tab.label}
+                </button>
+              ))}
+            </nav>
+
+            {/* Mobile menu button */}
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="md:hidden p-2 text-slate-400 hover:text-white"
+            >
+              {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+            </button>
+          </div>
+        </div>
+
+        {/* Mobile Nav */}
+        {mobileMenuOpen && (
+          <div className="md:hidden border-t border-slate-700 bg-slate-800 px-4 py-2">
+            {tabs.map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => { setActiveTab(tab.id); setMobileMenuOpen(false); }}
+                className={`flex items-center gap-2 w-full px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                  activeTab === tab.id
+                    ? 'bg-blue-600/20 text-blue-400'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                <tab.icon size={16} />
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        )}
+      </header>
+
+      {/* Hero Section */}
+      <section className="bg-gradient-to-b from-slate-800 to-slate-900 border-b border-slate-700">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="text-center max-w-3xl mx-auto">
+            <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-600/10 border border-blue-500/20 rounded-full text-blue-400 text-xs font-medium mb-4">
+              <span className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></span>
+              Production-Ready Foundation
+            </div>
+            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
+              Complete PHP 8.2 MVC Project
+            </h2>
+            <p className="text-slate-400 text-lg">
+              A production-grade, lightweight custom MVC framework for Khybersoft.
+              Built with security, performance, and scalability in mind.
+            </p>
+          </div>
+
+          {/* Feature Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-10">
+            {features.map((feature, i) => (
+              <div key={i} className="bg-slate-800/50 border border-slate-700 rounded-xl p-4 hover:border-slate-600 transition-colors">
+                <feature.icon size={24} className="text-blue-400 mb-2" />
+                <h3 className="font-semibold text-white text-sm">{feature.title}</h3>
+                <p className="text-xs text-slate-400 mt-1">{feature.desc}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Stats */}
+          <div className="flex flex-wrap justify-center gap-6 mt-8 text-center">
+            <div>
+              <div className="text-2xl font-bold text-white">{phpFiles.length}</div>
+              <div className="text-xs text-slate-400">Source Files</div>
+            </div>
+            <div>
+              <div className="text-2xl font-bold text-white">35+</div>
+              <div className="text-xs text-slate-400">Database Tables</div>
+            </div>
+            <div>
+              <div className="text-2xl font-bold text-white">PHP 8.2</div>
+              <div className="text-xs text-slate-400">Runtime</div>
+            </div>
+            <div>
+              <div className="text-2xl font-bold text-white">MySQL 8</div>
+              <div className="text-xs text-slate-400">Database</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Main Content */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {activeTab === 'structure' && <StructureView />}
+        {activeTab === 'database' && <DatabaseSchemaView />}
+        {activeTab === 'code' && <CodeView />}
+      </main>
+
+      {/* Footer */}
+      <footer className="border-t border-slate-700 bg-slate-800/50 mt-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-6 h-6 bg-gradient-to-br from-blue-500 to-purple-600 rounded flex items-center justify-center">
+                <span className="text-white font-bold text-xs">K</span>
+              </div>
+              <span className="text-sm text-slate-400">Khybersoft MVC Foundation v1.0</span>
+            </div>
+            <div className="flex items-center gap-4 text-sm text-slate-500">
+              <span>PHP 8.2 • MySQL 8 • TailwindCSS</span>
+              <a href="https://khybersoft.com" target="_blank" rel="noopener" className="flex items-center gap-1 text-blue-400 hover:text-blue-300">
+                khybersoft.com <ExternalLink size={12} />
+              </a>
+            </div>
+          </div>
+          <div className="mt-6 p-4 bg-slate-900/50 border border-slate-700 rounded-lg">
+            <h4 className="text-sm font-semibold text-slate-300 mb-2 flex items-center gap-2">
+              <Download size={14} />
+              Deployment Instructions
+            </h4>
+            <ol className="text-xs text-slate-400 space-y-1 list-decimal list-inside">
+              <li>Upload all files to your cPanel hosting (public_html for webroot)</li>
+              <li>Create MySQL database and import the schema from Database Schema tab</li>
+              <li>Copy .env.example to .env and configure database credentials</li>
+              <li>Set proper permissions: storage/ and uploads/ need write access (755)</li>
+              <li>Ensure PHP 8.2+ is active in cPanel with PDO, mbstring, and JSON extensions</li>
+              <li>Set document root to public_html/ directory</li>
+              <li>Create a default super_admin user via SQL or a setup script</li>
+            </ol>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+}
+
+export default App;
