@@ -7,6 +7,11 @@ import { crudContentFiles } from './data/crudContent';
 import { crudProductsFiles } from './data/crudProducts';
 import { crudBusinessFiles } from './data/crudBusiness';
 import { crudSystemFiles } from './data/crudSystem';
+import { frontLayoutFiles, frontControllerFiles } from './data/frontLayout';
+import { frontViewFiles } from './data/frontViews';
+import { frontProductViews } from './data/frontProductViews';
+import { frontBlogViews } from './data/frontBlogViews';
+import { frontAdditionalViews } from './data/frontAdditionalViews';
 import { AdminPanelPreview } from './components/AdminPreview';
 import {
   FolderTree,
@@ -28,7 +33,7 @@ import {
   LayoutDashboard,
 } from 'lucide-react';
 
-type Tab = 'structure' | 'database' | 'code' | 'admin' | 'crud';
+type Tab = 'structure' | 'database' | 'code' | 'admin' | 'crud' | 'frontend';
 
 interface TreeNode {
   name: string;
@@ -702,6 +707,138 @@ function CrudModulesView() {
   );
 }
 
+function FrontendView() {
+  const allFrontFiles = [
+    ...frontLayoutFiles,
+    ...frontControllerFiles,
+    ...frontViewFiles,
+    ...frontProductViews,
+    ...frontBlogViews,
+    ...frontAdditionalViews,
+  ];
+  
+  const [selectedModule, setSelectedModule] = useState('Layout');
+  const [selectedFile, setSelectedFile] = useState(allFrontFiles[0]?.path || '');
+
+  const modules = useMemo(() => {
+    const mods = new Set(allFrontFiles.map(f => f.module));
+    return Array.from(mods);
+  }, []);
+
+  const moduleFiles = allFrontFiles.filter(f => f.module === selectedModule);
+  const currentFile = allFrontFiles.find(f => f.path === selectedFile) || moduleFiles[0];
+
+  const moduleDescriptions: Record<string, string> = {
+    'Layout': 'Main frontend layout with navbar, footer, WhatsApp button, back-to-top',
+    'Front': 'Frontend controllers for all public pages',
+    'Homepage': 'Homepage with hero, products, testimonials, blog sections',
+    'Products': 'Product detail page with screenshots, pricing, demos, FAQ, inquiry form',
+    'Blog': 'Blog listing and post detail with TOC, reading progress, comments',
+    'Contact': 'Contact page with form, map, contact cards',
+    'About': 'About page with story, mission, vision, values, team, timeline',
+    'Services': 'Services listing with cards, process steps, CTAs',
+    'FAQ': 'FAQ page with categorized accordion',
+    'Errors': '404 and 500 error pages with branded design',
+  };
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-bold text-white">Public Frontend</h2>
+        <p className="text-slate-400 mt-1">Premium design with TailwindCSS, Alpine.js, AOS animations • {allFrontFiles.length} files</p>
+      </div>
+
+      {/* Design Features */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {[
+          { label: 'Fonts', value: 'Inter + Sora' },
+          { label: 'Colors', value: 'Indigo + Navy' },
+          { label: 'Animations', value: 'AOS.js' },
+          { label: 'Framework', value: 'Alpine.js' },
+        ].map((feat) => (
+          <div key={feat.label} className="bg-slate-800/50 border border-slate-700 rounded-xl p-3 text-center">
+            <div className="text-xs text-slate-500">{feat.label}</div>
+            <div className="text-sm font-semibold text-white mt-1">{feat.value}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Module Grid */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        {modules.map(mod => {
+          const count = allFrontFiles.filter(f => f.module === mod).length;
+          return (
+            <button
+              key={mod}
+              onClick={() => { setSelectedModule(mod); setSelectedFile(allFrontFiles.find(f => f.module === mod)?.path || ''); }}
+              className={`p-3 rounded-xl border text-left transition-all ${
+                selectedModule === mod
+                  ? 'bg-blue-600/20 border-blue-500/50 text-blue-300'
+                  : 'bg-slate-800/50 border-slate-700 text-slate-400 hover:border-slate-600 hover:text-slate-200'
+              }`}
+            >
+              <div className="text-lg font-bold">{count}</div>
+              <div className="text-xs truncate">{mod}</div>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Module Detail */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        {/* File List */}
+        <div className="lg:col-span-1 bg-slate-800/50 border border-slate-700 rounded-xl p-4">
+          <h3 className="text-sm font-semibold text-blue-400 mb-1">{selectedModule}</h3>
+          <p className="text-xs text-slate-500 mb-3">{moduleDescriptions[selectedModule] || ''}</p>
+          <div className="space-y-1">
+            {moduleFiles.map(file => (
+              <button
+                key={file.path}
+                onClick={() => setSelectedFile(file.path)}
+                className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
+                  selectedFile === file.path
+                    ? 'bg-blue-600/20 text-blue-300 border border-blue-500/30'
+                    : 'text-slate-400 hover:bg-slate-700/50 hover:text-slate-200'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <span className={`text-xs px-1.5 py-0.5 rounded ${
+                    file.type === 'controller' ? 'bg-green-900/30 text-green-400' :
+                    file.type === 'layout' ? 'bg-purple-900/30 text-purple-400' :
+                    file.type === 'partial' ? 'bg-amber-900/30 text-amber-400' :
+                    'bg-blue-900/30 text-blue-400'
+                  }`}>
+                    {file.type}
+                  </span>
+                  <span className="font-mono text-xs truncate">{file.name}</span>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Code Display */}
+        <div className="lg:col-span-3">
+          {currentFile && (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <span className={`text-xs px-2 py-1 rounded ${
+                  currentFile.type === 'controller' ? 'bg-green-900/30 text-green-400' :
+                  currentFile.type === 'layout' ? 'bg-purple-900/30 text-purple-400' :
+                  currentFile.type === 'partial' ? 'bg-amber-900/30 text-amber-400' :
+                  'bg-blue-900/30 text-blue-400'
+                }`}>{currentFile.type}</span>
+                <span className="text-sm text-slate-400">{currentFile.description}</span>
+              </div>
+              <CodeBlock code={currentFile.content} filename={currentFile.path} language={currentFile.language} />
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function App() {
   const [activeTab, setActiveTab] = useState<Tab>('admin');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -713,6 +850,7 @@ function App() {
     { id: 'code' as Tab, label: 'Source Code', icon: FileCode },
     { id: 'admin' as Tab, label: 'Admin Panel', icon: LayoutDashboard },
     { id: 'crud' as Tab, label: 'Admin CRUD', icon: Shield },
+    { id: 'frontend' as Tab, label: 'Frontend', icon: Layout },
   ];
 
   const features = [
@@ -879,6 +1017,7 @@ function App() {
           </div>
         )}
         {activeTab === 'crud' && <CrudModulesView />}
+        {activeTab === 'frontend' && <FrontendView />}
       </main>
 
       {/* Footer */}
