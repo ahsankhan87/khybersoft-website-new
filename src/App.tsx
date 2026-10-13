@@ -17,6 +17,7 @@ import { advancedEmailFiles } from './data/advancedEmail';
 import { advancedSystemFiles } from './data/advancedSystem';
 import { uiComponents } from './data/uiComponents';
 import { uiPolish } from './data/uiPolish';
+import { deploymentFiles } from './data/deploymentFiles';
 import { AdminPanelPreview } from './components/AdminPreview';
 import {
   FolderTree,
@@ -38,7 +39,7 @@ import {
   LayoutDashboard,
 } from 'lucide-react';
 
-type Tab = 'structure' | 'database' | 'code' | 'admin' | 'crud' | 'frontend' | 'advanced' | 'ui';
+type Tab = 'structure' | 'database' | 'code' | 'admin' | 'crud' | 'frontend' | 'advanced' | 'ui' | 'deployment';
 
 interface TreeNode {
   name: string;
@@ -1038,6 +1039,149 @@ function UIComponentsView() {
   );
 }
 
+function DeploymentView() {
+  const [selectedCategory, setSelectedCategory] = useState('Installation');
+  const [selectedFile, setSelectedFile] = useState(deploymentFiles[0]?.path || '');
+
+  const categories = useMemo(() => {
+    const cats = new Set(deploymentFiles.map(f => f.category));
+    return Array.from(cats);
+  }, []);
+
+  const categoryFiles = deploymentFiles.filter(f => f.category === selectedCategory);
+  const currentFile = deploymentFiles.find(f => f.path === selectedFile) || categoryFiles[0];
+
+  const categoryDescriptions: Record<string, string> = {
+    'Installation': 'Installation wizard and database setup files',
+    'Cron Jobs': 'Automated tasks for email, backups, and scheduled posts',
+    'Configuration': 'Environment and application configuration files',
+    'Security': '.htaccess files for security and performance',
+  };
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-bold text-white">Deployment Files</h2>
+        <p className="text-slate-400 mt-1">Installation wizard, cron jobs, configuration, and security files • {deploymentFiles.length} files</p>
+      </div>
+
+      {/* Category Grid */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {categories.map(cat => {
+          const count = deploymentFiles.filter(f => f.category === cat).length;
+          return (
+            <button
+              key={cat}
+              onClick={() => { setSelectedCategory(cat); setSelectedFile(deploymentFiles.find(f => f.category === cat)?.path || ''); }}
+              className={`p-3 rounded-xl border text-left transition-all ${
+                selectedCategory === cat
+                  ? 'bg-blue-600/20 border-blue-500/50 text-blue-300'
+                  : 'bg-slate-800/50 border-slate-700 text-slate-400 hover:border-slate-600 hover:text-slate-200'
+              }`}
+            >
+              <div className="text-lg font-bold">{count}</div>
+              <div className="text-xs truncate">{cat}</div>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Category Detail */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        {/* File List */}
+        <div className="lg:col-span-1 bg-slate-800/50 border border-slate-700 rounded-xl p-4">
+          <h3 className="text-sm font-semibold text-blue-400 mb-1">{selectedCategory}</h3>
+          <p className="text-xs text-slate-500 mb-3">{categoryDescriptions[selectedCategory] || ''}</p>
+          <div className="space-y-1">
+            {categoryFiles.map(file => (
+              <button
+                key={file.path}
+                onClick={() => setSelectedFile(file.path)}
+                className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
+                  selectedFile === file.path
+                    ? 'bg-blue-600/20 text-blue-300 border border-blue-500/30'
+                    : 'text-slate-400 hover:bg-slate-700/50 hover:text-slate-200'
+                }`}
+              >
+                <div className="font-mono text-xs truncate">{file.name}</div>
+                <div className="text-xs text-slate-500 truncate mt-0.5">{file.description}</div>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Code Display */}
+        <div className="lg:col-span-3 fade-in">
+          {currentFile && (
+            <div className="space-y-3">
+              <div>
+                <h3 className="text-lg font-semibold text-white">{currentFile.name}</h3>
+                <p className="text-sm text-slate-400 mt-1">{currentFile.description}</p>
+                <p className="text-xs text-slate-500 mt-1 font-mono">{currentFile.path}</p>
+              </div>
+              <CodeBlock code={currentFile.content} filename={currentFile.name} language={currentFile.language} />
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Deployment Checklist */}
+      <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
+        <h3 className="text-lg font-semibold text-white mb-4">🚀 Deployment Checklist</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <h4 className="text-sm font-semibold text-blue-400 mb-2">Pre-Deployment</h4>
+            <ul className="space-y-2 text-sm text-slate-300">
+              <li className="flex items-start gap-2"><Check size={16} className="text-green-400 mt-0.5 flex-shrink-0" /> PHP 8.2+ installed</li>
+              <li className="flex items-start gap-2"><Check size={16} className="text-green-400 mt-0.5 flex-shrink-0" /> MySQL 8.0+ available</li>
+              <li className="flex items-start gap-2"><Check size={16} className="text-green-400 mt-0.5 flex-shrink-0" /> Required PHP extensions loaded</li>
+              <li className="flex items-start gap-2"><Check size={16} className="text-green-400 mt-0.5 flex-shrink-0" /> SSL certificate installed</li>
+              <li className="flex items-start gap-2"><Check size={16} className="text-green-400 mt-0.5 flex-shrink-0" /> Sufficient disk space</li>
+            </ul>
+          </div>
+          <div>
+            <h4 className="text-sm font-semibold text-blue-400 mb-2">Post-Deployment</h4>
+            <ul className="space-y-2 text-sm text-slate-300">
+              <li className="flex items-start gap-2"><Check size={16} className="text-green-400 mt-0.5 flex-shrink-0" /> Run installation wizard</li>
+              <li className="flex items-start gap-2"><Check size={16} className="text-green-400 mt-0.5 flex-shrink-0" /> Configure SMTP email</li>
+              <li className="flex items-start gap-2"><Check size={16} className="text-green-400 mt-0.5 flex-shrink-0" /> Set up cron jobs</li>
+              <li className="flex items-start gap-2"><Check size={16} className="text-green-400 mt-0.5 flex-shrink-0" /> Configure payment gateways</li>
+              <li className="flex items-start gap-2"><Check size={16} className="text-green-400 mt-0.5 flex-shrink-0" /> Test all features</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      {/* Cron Jobs Reference */}
+      <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
+        <h3 className="text-lg font-semibold text-white mb-4">⏰ Cron Jobs Setup</h3>
+        <div className="space-y-3 text-sm">
+          <div className="flex items-start gap-3 p-3 bg-slate-900/50 rounded-lg">
+            <code className="text-blue-400 font-mono text-xs flex-shrink-0">*/5 * * * *</code>
+            <span className="text-slate-300">Email queue processor - Sends queued emails every 5 minutes</span>
+          </div>
+          <div className="flex items-start gap-3 p-3 bg-slate-900/50 rounded-lg">
+            <code className="text-blue-400 font-mono text-xs flex-shrink-0">0 2 * * *</code>
+            <span className="text-slate-300">Daily backup - Creates database and file backups at 2 AM</span>
+          </div>
+          <div className="flex items-start gap-3 p-3 bg-slate-900/50 rounded-lg">
+            <code className="text-blue-400 font-mono text-xs flex-shrink-0">*/5 * * * *</code>
+            <span className="text-slate-300">Scheduled posts - Publishes scheduled blog posts every 5 minutes</span>
+          </div>
+          <div className="flex items-start gap-3 p-3 bg-slate-900/50 rounded-lg">
+            <code className="text-blue-400 font-mono text-xs flex-shrink-0">0 3 * * *</code>
+            <span className="text-slate-300">Sitemap generation - Regenerates sitemap.xml daily at 3 AM</span>
+          </div>
+          <div className="flex items-start gap-3 p-3 bg-slate-900/50 rounded-lg">
+            <code className="text-blue-400 font-mono text-xs flex-shrink-0">0 */6 * * *</code>
+            <span className="text-slate-300">Newsletter sending - Sends batched newsletters every 6 hours</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function App() {
   const [activeTab, setActiveTab] = useState<Tab>('admin');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -1052,6 +1196,7 @@ function App() {
     { id: 'frontend' as Tab, label: 'Frontend', icon: Layout },
     { id: 'advanced' as Tab, label: 'Advanced Features', icon: Server },
     { id: 'ui' as Tab, label: 'UI Components', icon: Check },
+    { id: 'deployment' as Tab, label: 'Deployment', icon: Download },
   ];
 
   const features = [
@@ -1221,6 +1366,7 @@ function App() {
         {activeTab === 'frontend' && <FrontendView />}
         {activeTab === 'advanced' && <AdvancedFeaturesView />}
         {activeTab === 'ui' && <UIComponentsView />}
+        {activeTab === 'deployment' && <DeploymentView />}
       </main>
 
       {/* Footer */}
