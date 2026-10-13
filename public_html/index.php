@@ -60,6 +60,9 @@ if (!isset($_SESSION['_created_at'])) {
 // Initialize CSRF
 CSRF::init();
 
-// Route the request
+// Load routes
 $router = new \App\Core\Router();
+require_once ROOT_PATH . '/routes/web.php';
+
+// Route the request
 $router->dispatch();
