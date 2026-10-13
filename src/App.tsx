@@ -2,6 +2,11 @@ import { useState, useMemo } from 'react';
 import { phpFiles } from './data/phpFiles';
 import { adminPhpFiles } from './data/adminFiles';
 import { databaseSchema } from './data/schema';
+import { crudBaseFiles } from './data/crudBase';
+import { crudContentFiles } from './data/crudContent';
+import { crudProductsFiles } from './data/crudProducts';
+import { crudBusinessFiles } from './data/crudBusiness';
+import { crudSystemFiles } from './data/crudSystem';
 import { AdminPanelPreview } from './components/AdminPreview';
 import {
   FolderTree,
@@ -23,7 +28,7 @@ import {
   LayoutDashboard,
 } from 'lucide-react';
 
-type Tab = 'structure' | 'database' | 'code' | 'admin';
+type Tab = 'structure' | 'database' | 'code' | 'admin' | 'crud';
 
 interface TreeNode {
   name: string;
@@ -579,6 +584,124 @@ function AdminCodeView() {
   );
 }
 
+function CrudModulesView() {
+  const allCrudFiles = [...crudBaseFiles, ...crudContentFiles, ...crudProductsFiles, ...crudBusinessFiles, ...crudSystemFiles];
+  const [selectedModule, setSelectedModule] = useState('Core');
+  const [selectedFile, setSelectedFile] = useState(allCrudFiles[0]?.path || '');
+
+  const modules = useMemo(() => {
+    const mods = new Set(allCrudFiles.map(f => f.module));
+    return Array.from(mods);
+  }, []);
+
+  const moduleFiles = allCrudFiles.filter(f => f.module === selectedModule);
+  const currentFile = allCrudFiles.find(f => f.path === selectedFile) || moduleFiles[0];
+
+  const moduleDescriptions: Record<string, string> = {
+    'Core': 'Base AdminController + reusable table/form components',
+    'Pages': 'CMS pages with TinyMCE, slug auto-gen, SEO fields',
+    'Blog': 'Blog posts with categories, tags, featured image, scheduled publishing',
+    'Blog Categories': 'Simple CRUD for blog categories',
+    'Comments': 'Comment moderation: approve/reject/spam',
+    'Media': 'Media library with drag-drop upload, image resize, copy URL',
+    'Products': 'Products with repeater fields, drag-drop sortable, multi-upload screenshots',
+    'Inquiries': 'Product inquiries with filters, CSV export, status management',
+    'Services': 'Services with icon, features repeater, pricing',
+    'Testimonials': 'Testimonials with photo, star rating, video URL',
+    'Team': 'Team members with social links repeater',
+    'FAQs': 'FAQs with category, accordion display, sortable',
+    'Messages': 'Contact messages with view, reply, status tracking',
+    'Newsletter': 'Newsletter subscribers with export CSV',
+    'Users': 'User management with roles, status, password reset',
+    'Roles': 'Roles & permissions matrix UI with checkboxes',
+    'Settings': 'Tabbed settings: General, Contact, Social, SEO, Email, Payment',
+    'Activity Logs': 'Filterable activity log timeline',
+    'Redirects': 'URL redirects with from/to/status code',
+  };
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-bold text-white">Admin CRUD Modules</h2>
+        <p className="text-slate-400 mt-1">Complete CRUD implementation for all admin modules — {allCrudFiles.length} files across {modules.length} modules</p>
+      </div>
+
+      {/* Module Stats */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3">
+        {modules.map(mod => {
+          const count = allCrudFiles.filter(f => f.module === mod).length;
+          return (
+            <button
+              key={mod}
+              onClick={() => { setSelectedModule(mod); setSelectedFile(allCrudFiles.find(f => f.module === mod)?.path || ''); }}
+              className={`p-3 rounded-xl border text-left transition-all ${
+                selectedModule === mod
+                  ? 'bg-blue-600/20 border-blue-500/50 text-blue-300'
+                  : 'bg-slate-800/50 border-slate-700 text-slate-400 hover:border-slate-600 hover:text-slate-200'
+              }`}
+            >
+              <div className="text-lg font-bold">{count}</div>
+              <div className="text-xs truncate">{mod}</div>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Module Detail */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        {/* File List */}
+        <div className="lg:col-span-1 bg-slate-800/50 border border-slate-700 rounded-xl p-4">
+          <h3 className="text-sm font-semibold text-blue-400 mb-1">{selectedModule}</h3>
+          <p className="text-xs text-slate-500 mb-3">{moduleDescriptions[selectedModule] || ''}</p>
+          <div className="space-y-1">
+            {moduleFiles.map(file => (
+              <button
+                key={file.path}
+                onClick={() => setSelectedFile(file.path)}
+                className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
+                  selectedFile === file.path
+                    ? 'bg-blue-600/20 text-blue-300 border border-blue-500/30'
+                    : 'text-slate-400 hover:bg-slate-700/50 hover:text-slate-200'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <span className={`text-xs px-1.5 py-0.5 rounded ${
+                    file.type === 'controller' ? 'bg-green-900/30 text-green-400' :
+                    file.type === 'model' ? 'bg-purple-900/30 text-purple-400' :
+                    file.type === 'base' ? 'bg-amber-900/30 text-amber-400' :
+                    'bg-blue-900/30 text-blue-400'
+                  }`}>
+                    {file.type === 'view-index' ? 'index' : file.type === 'view-create' ? 'create' : file.type === 'view-edit' ? 'edit' : file.type}
+                  </span>
+                  <span className="font-mono text-xs truncate">{file.name}</span>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Code Display */}
+        <div className="lg:col-span-3">
+          {currentFile && (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <span className={`text-xs px-2 py-1 rounded ${
+                  currentFile.type === 'controller' ? 'bg-green-900/30 text-green-400' :
+                  currentFile.type === 'model' ? 'bg-purple-900/30 text-purple-400' :
+                  currentFile.type === 'base' ? 'bg-amber-900/30 text-amber-400' :
+                  'bg-blue-900/30 text-blue-400'
+                }`}>{currentFile.type}</span>
+                <span className="text-sm text-slate-400">{currentFile.description}</span>
+              </div>
+              <CodeBlock code={currentFile.content} filename={currentFile.path} language={currentFile.language} />
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function App() {
   const [activeTab, setActiveTab] = useState<Tab>('admin');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -589,6 +712,7 @@ function App() {
     { id: 'database' as Tab, label: 'Database Schema', icon: Database },
     { id: 'code' as Tab, label: 'Source Code', icon: FileCode },
     { id: 'admin' as Tab, label: 'Admin Panel', icon: LayoutDashboard },
+    { id: 'crud' as Tab, label: 'Admin CRUD', icon: Shield },
   ];
 
   const features = [
@@ -754,6 +878,7 @@ function App() {
             {adminSubTab === 'code' && <AdminCodeView />}
           </div>
         )}
+        {activeTab === 'crud' && <CrudModulesView />}
       </main>
 
       {/* Footer */}
