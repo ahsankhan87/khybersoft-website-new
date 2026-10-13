@@ -15,6 +15,8 @@ import { frontAdditionalViews } from './data/frontAdditionalViews';
 import { advancedSearchFiles } from './data/advancedSearch';
 import { advancedEmailFiles } from './data/advancedEmail';
 import { advancedSystemFiles } from './data/advancedSystem';
+import { uiComponents } from './data/uiComponents';
+import { uiPolish } from './data/uiPolish';
 import { AdminPanelPreview } from './components/AdminPreview';
 import {
   FolderTree,
@@ -36,7 +38,7 @@ import {
   LayoutDashboard,
 } from 'lucide-react';
 
-type Tab = 'structure' | 'database' | 'code' | 'admin' | 'crud' | 'frontend' | 'advanced';
+type Tab = 'structure' | 'database' | 'code' | 'admin' | 'crud' | 'frontend' | 'advanced' | 'ui';
 
 interface TreeNode {
   name: string;
@@ -940,6 +942,102 @@ function AdvancedFeaturesView() {
   );
 }
 
+function UIComponentsView() {
+  const allUIFiles = [...uiComponents, ...uiPolish];
+  const [selectedCategory, setSelectedCategory] = useState('Basic');
+  const [selectedFile, setSelectedFile] = useState(allUIFiles[0]?.path || '');
+
+  const categories = useMemo(() => {
+    const cats = new Set(allUIFiles.map(f => f.category));
+    return Array.from(cats);
+  }, []);
+
+  const categoryFiles = allUIFiles.filter(f => f.category === selectedCategory);
+  const currentFile = allUIFiles.find(f => f.path === selectedFile) || categoryFiles[0];
+
+  const categoryDescriptions: Record<string, string> = {
+    'Basic': 'Core UI components: Button, Card, Badge, Alert',
+    'Feedback': 'User feedback: Modal, Alert, Toast, Skeleton loader',
+    'Overlay': 'Overlay components: Modal, Dropdown, Tooltip',
+    'Data Display': 'Data presentation: Accordion, Tabs, Stat Card',
+    'Navigation': 'Navigation: Pagination, Breadcrumb, Tabs',
+    'Form': 'Form inputs: Input, Textarea, Select, Checkbox, Toggle',
+    'Layout': 'Layout helpers: Section Heading, CTA Band',
+    'Domain': 'Domain-specific: Product Card, Blog Card, Testimonial Card',
+    'Public': 'Public page enhancements: Hero animations, Counters, Parallax',
+    'Admin': 'Admin polish: Command palette, Inline editing, Help tooltips',
+  };
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-bold text-white">UI Component Library</h2>
+        <p className="text-slate-400 mt-1">Reusable Blade-like PHP components + page polish • {allUIFiles.length} components</p>
+      </div>
+
+      {/* Category Grid */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+        {categories.map(cat => {
+          const count = allUIFiles.filter(f => f.category === cat).length;
+          return (
+            <button
+              key={cat}
+              onClick={() => { setSelectedCategory(cat); setSelectedFile(allUIFiles.find(f => f.category === cat)?.path || ''); }}
+              className={`p-3 rounded-xl border text-left transition-all ${
+                selectedCategory === cat
+                  ? 'bg-blue-600/20 border-blue-500/50 text-blue-300'
+                  : 'bg-slate-800/50 border-slate-700 text-slate-400 hover:border-slate-600 hover:text-slate-200'
+              }`}
+            >
+              <div className="text-lg font-bold">{count}</div>
+              <div className="text-xs truncate">{cat}</div>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Category Detail */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        {/* File List */}
+        <div className="lg:col-span-1 bg-slate-800/50 border border-slate-700 rounded-xl p-4">
+          <h3 className="text-sm font-semibold text-blue-400 mb-1">{selectedCategory}</h3>
+          <p className="text-xs text-slate-500 mb-3">{categoryDescriptions[selectedCategory] || ''}</p>
+          <div className="space-y-1">
+            {categoryFiles.map(file => (
+              <button
+                key={file.path}
+                onClick={() => setSelectedFile(file.path)}
+                className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
+                  selectedFile === file.path
+                    ? 'bg-blue-600/20 text-blue-300 border border-blue-500/30'
+                    : 'text-slate-400 hover:bg-slate-700/50 hover:text-slate-200'
+                }`}
+              >
+                <div className="font-mono text-xs truncate">{file.name}</div>
+                <div className="text-xs text-slate-500 truncate mt-0.5">{file.description}</div>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Code Display */}
+        <div className="lg:col-span-3 fade-in">
+          {currentFile && (
+            <div className="space-y-3">
+              <div>
+                <h3 className="text-lg font-semibold text-white">{currentFile.name}</h3>
+                <p className="text-sm text-slate-400 mt-1">{currentFile.description}</p>
+                <p className="text-xs text-slate-500 mt-1 font-mono">{currentFile.path}</p>
+              </div>
+              <CodeBlock code={currentFile.content} filename={currentFile.name} language={currentFile.language} />
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function App() {
   const [activeTab, setActiveTab] = useState<Tab>('admin');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -953,6 +1051,7 @@ function App() {
     { id: 'crud' as Tab, label: 'Admin CRUD', icon: Shield },
     { id: 'frontend' as Tab, label: 'Frontend', icon: Layout },
     { id: 'advanced' as Tab, label: 'Advanced Features', icon: Server },
+    { id: 'ui' as Tab, label: 'UI Components', icon: Check },
   ];
 
   const features = [
@@ -1121,6 +1220,7 @@ function App() {
         {activeTab === 'crud' && <CrudModulesView />}
         {activeTab === 'frontend' && <FrontendView />}
         {activeTab === 'advanced' && <AdvancedFeaturesView />}
+        {activeTab === 'ui' && <UIComponentsView />}
       </main>
 
       {/* Footer */}

@@ -8,11 +8,12 @@ A production-ready PHP 8.2 MVC framework with complete admin panel and public fr
 
 ## 📊 Project Statistics
 
-- **Total PHP Files**: 110+ files
+- **Total PHP Files**: 125+ files
 - **Database Tables**: 40+ tables
 - **Admin Modules**: 19 modules with full CRUD
 - **Frontend Pages**: 12 pages with premium design
 - **Advanced Features**: 12 production-grade systems
+- **UI Components**: 25+ reusable components
 - **Runtime**: PHP 8.2+
 - **Database**: MySQL 8.0+
 - **Frontend**: TailwindCSS + Alpine.js + AOS
@@ -328,6 +329,112 @@ A production-ready PHP 8.2 MVC framework with complete admin panel and public fr
 
 ---
 
+## 🎨 UI Component Library
+
+### Reusable PHP Components (Blade-like)
+Located in `/app/views/components/`, these components provide consistent, reusable UI elements across the application.
+
+#### Basic Components
+✅ **Button** - Multiple variants (primary, secondary, outline, ghost, danger), sizes (sm, md, lg), loading state, icons  
+✅ **Card** - Flexible container with optional header, footer, hover effects  
+✅ **Badge/Pill** - Status indicators with color variants  
+✅ **Alert/Toast** - Success, error, warning, info messages with dismissible option  
+
+#### Overlay Components
+✅ **Modal** - Accessible modal with ESC close, focus trap, backdrop, sizes (sm, md, lg, xl, full)  
+✅ **Dropdown** - Context menus and action dropdowns  
+✅ **Tooltip** - Contextual help on hover  
+
+#### Data Display
+✅ **Accordion** - Collapsible content sections (FAQ-style)  
+✅ **Tabs** - Tabbed interface with underline or pill variants  
+✅ **Table** - Sortable, responsive data tables  
+✅ **Stat Card** - Metrics display with trend indicators  
+✅ **Empty State** - Placeholder for empty lists  
+
+#### Form Components
+✅ **Input** - Text input with label, error, help text, icons  
+✅ **Textarea** - Multi-line text input  
+✅ **Select** - Dropdown select with options  
+✅ **Checkbox** - Checkbox with label  
+✅ **Radio** - Radio button group  
+✅ **Toggle** - Switch/toggle component  
+✅ **File Upload** - Drag-and-drop file upload with preview  
+
+#### Navigation
+✅ **Pagination** - Styled pagination with page numbers  
+✅ **Breadcrumb** - Navigation breadcrumb trail  
+
+#### Layout
+✅ **Section Heading** - Eyebrow + title + subtitle pattern  
+✅ **CTA Band** - Call-to-action banner  
+✅ **Skeleton Loader** - Loading placeholder animations  
+
+#### Domain-Specific Cards
+✅ **Product Card** - Product display with image, pricing, CTAs  
+✅ **Blog Card** - Blog post preview with author, date, excerpt  
+✅ **Tutorial Card** - Tutorial/video card with duration, difficulty  
+✅ **Testimonial Card** - Customer testimonial with rating  
+✅ **Team Card** - Team member with photo, role, social links  
+✅ **Pricing Table** - Pricing plans comparison  
+
+### Usage Example
+```php
+<?= component('button', [
+    'label' => 'Submit',
+    'variant' => 'primary',
+    'size' => 'lg',
+    'icon' => 'M5 13l4 4L19 7',
+    'loading' => false
+]) ?>
+
+<?= component('card', [
+    'title' => 'Product Name',
+    'content' => 'Description here...',
+    'hover' => true,
+    'headerImage' => $product['hero_image']
+]) ?>
+```
+
+---
+
+## ✨ Page Polish & Enhancements
+
+### Public Pages
+✅ **Animated Hero** - Gradient mesh background, floating elements, custom cursor  
+✅ **Scroll Animations** - AOS (Animate On Scroll) integration  
+✅ **Number Counters** - Animated counters that trigger on scroll  
+✅ **Parallax Sections** - Depth effect on scroll  
+✅ **Smooth Scroll** - Smooth anchor link scrolling  
+✅ **Loading Splash** - Initial loading screen  
+✅ **Cookie Consent** - GDPR-compliant cookie banner  
+✅ **Announcement Bar** - Admin-toggleable promotion banner  
+
+### Admin Panel
+✅ **Skeleton Loading** - Loading placeholders for async content  
+✅ **Inline Editing** - Quick edit without leaving the page  
+✅ **Command Palette** - Cmd+K / Ctrl+K for quick navigation  
+✅ **Contextual Help** - Tooltip-based help system  
+✅ **Keyboard Shortcuts** - Power user navigation  
+
+### Animation System
+```css
+/* Custom animations defined in components */
+@keyframes float { ... }
+@keyframes fade-in-up { ... }
+@keyframes gradient { ... }
+@keyframes pulse-slow { ... }
+```
+
+### Interactive Features
+- **Custom Cursor** - Optional branded cursor on desktop
+- **Hover Effects** - Lift, scale, glow effects
+- **Micro-interactions** - Button states, transitions
+- **Scroll Triggers** - Elements animate into view
+- **Parallax Depth** - Background layers move at different speeds
+
+---
+
 ## 📦 Key Components
 
 ### Base AdminController
@@ -597,6 +704,7 @@ Browse the interactive documentation site to explore:
 - **Admin CRUD** - All 19 admin modules
 - **Frontend** - Public-facing pages
 - **Advanced Features** - Search, Email, Payments, Security, Performance, i18n
+- **UI Components** - 25+ reusable components + page polish
 
 ---
 
