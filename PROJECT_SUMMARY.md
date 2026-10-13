@@ -8,10 +8,11 @@ A production-ready PHP 8.2 MVC framework with complete admin panel and public fr
 
 ## 📊 Project Statistics
 
-- **Total PHP Files**: 90+ files
-- **Database Tables**: 35+ tables
+- **Total PHP Files**: 110+ files
+- **Database Tables**: 40+ tables
 - **Admin Modules**: 19 modules with full CRUD
 - **Frontend Pages**: 12 pages with premium design
+- **Advanced Features**: 12 production-grade systems
 - **Runtime**: PHP 8.2+
 - **Database**: MySQL 8.0+
 - **Frontend**: TailwindCSS + Alpine.js + AOS
@@ -210,6 +211,120 @@ A production-ready PHP 8.2 MVC framework with complete admin panel and public fr
 - Footer with newsletter, social links
 - WhatsApp floating chat button
 - Back-to-top button
+
+---
+
+## 🚀 Advanced Features
+
+### 1. Global Search System
+✅ **Full-text search** using MySQL FULLTEXT indexes  
+✅ **AJAX live search** with debounced results  
+✅ **Multi-content search** (products, blog, tutorials, pages, services)  
+✅ **Relevance scoring** with weighted results  
+✅ **Search analytics** (popular terms, result tracking)  
+✅ **Type filtering** with result counts  
+
+### 2. Lead Capture & CRM
+✅ **Auto-capture** from all forms (contact, demo, quote, inquiry)  
+✅ **Lead scoring** (0-100 based on budget, type, company, phone)  
+✅ **Temperature tagging** (hot/warm/cold)  
+✅ **Pipeline management** (Kanban: New → Contacted → Qualified → Won/Lost)  
+✅ **Follow-up reminders** with scheduled tasks  
+✅ **Admin notifications** for new leads  
+✅ **Source tracking** (product page, blog, referral, direct)  
+
+### 3. Email System
+✅ **PHPMailer wrapper** with SMTP support  
+✅ **Email templates** (welcome, inquiry reply, password reset, newsletter)  
+✅ **Queue system** with cron job processing  
+✅ **Retry logic** (3 attempts before marking failed)  
+✅ **Unsubscribe handling** with secure tokens  
+✅ **Template variables** replacement  
+✅ **Admin notifications** for new leads  
+
+### 4. Payment Integration
+✅ **Stripe Checkout** for one-time and subscription payments  
+✅ **PayPal Smart Buttons** integration  
+✅ **Order management** with order numbers  
+✅ **Invoice generation** (HTML/PDF)  
+✅ **License key generation** (auto on purchase)  
+✅ **License validation API** for software products  
+✅ **Webhook handlers** for payment events  
+✅ **Secure download tokens** (expiring, tracked)  
+
+### 5. Download System
+✅ **Tokenized downloads** (24-hour expiry)  
+✅ **Download tracking** (IP, user agent, timestamp)  
+✅ **Free vs paid gating** (verify order before download)  
+✅ **Direct file serving** or redirect to URL  
+
+### 6. Live Chat
+✅ **Tawk.to integration** (settings-driven)  
+✅ **Crisp Chat integration** (settings-driven)  
+✅ **WhatsApp click-to-chat** with pulse animation  
+✅ **Configurable from admin** (Settings → Integrations)  
+
+### 7. Analytics Dashboard
+✅ **Page view tracking** (own table + optional Google Analytics)  
+✅ **Popular content** (products, blog posts, tutorials)  
+✅ **Conversion funnel** (visit → product view → inquiry → demo → sale)  
+✅ **Traffic sources** (Direct, Google, Facebook, LinkedIn, etc.)  
+✅ **Unique visitors** tracking  
+✅ **Daily views chart**  
+
+### 8. SEO Features
+✅ **Auto sitemap.xml** (products, blog, tutorials, services, static pages)  
+✅ **Schema.org JSON-LD** (Organization, Product, Article, FAQ, BreadcrumbList, VideoObject)  
+✅ **Open Graph tags** (title, description, image, type)  
+✅ **Twitter Cards** (summary_large_image)  
+✅ **Canonical URLs**  
+✅ **Auto meta generation** from content  
+✅ **robots.txt editor** (from admin settings)  
+✅ **301 redirect manager**  
+✅ **hreflang ready** (multi-language structure)  
+
+### 9. Multi-Language (i18n)
+✅ **Languages table** with RTL support  
+✅ **Translations table** (key-value pairs)  
+✅ **Language switcher** component  
+✅ **RTL support** (Urdu, Arabic ready)  
+✅ **Session/cookie persistence**  
+✅ **URL parameter switching** (?lang=ur)  
+✅ **Default language** configuration  
+
+### 10. Backup System
+✅ **One-click database backup** (mysqldump wrapper)  
+✅ **File backup** (uploads folder → ZIP)  
+✅ **Auto-backup cron** (daily at 2 AM)  
+✅ **Compression** (ZIP archives)  
+✅ **Cleanup old backups** (keep last 30 days)  
+✅ **Download from admin** panel  
+
+### 11. Security Hardening
+✅ **CSRF protection** on all forms  
+✅ **XSS prevention** (output escaping helper)  
+✅ **SQL injection prevention** (PDO prepared statements only)  
+✅ **Rate limiting** (session + IP based, 5 attempts/15 min)  
+✅ **Honeypot fields** (anti-bot)  
+✅ **reCAPTCHA v3** (optional, settings-driven)  
+✅ **File upload validation** (MIME, extension, size, dimensions)  
+✅ **.htaccess security** (block .env, config, hide PHP version)  
+✅ **Security headers** (CSP, X-Frame-Options, HSTS, X-Content-Type-Options)  
+✅ **Login attempt logging**  
+✅ **2FA for admins** (TOTP, Google Authenticator compatible)  
+✅ **Session fixation prevention** (ID regeneration)  
+✅ **Account lockout** (after 5 failed attempts)  
+
+### 12. Performance Optimization
+✅ **File-based caching** (simple, effective)  
+✅ **Lazy loading images** (native browser support)  
+✅ **Minified CSS/JS** in production  
+✅ **Gzip compression** via .htaccess  
+✅ **Browser caching** (1 year for images, 1 month for CSS/JS)  
+✅ **CDN-ready** asset URLs  
+✅ **Database indexes** (slug, status, created_at, FULLTEXT)  
+✅ **Query optimization** (prepared statements, indexed queries)  
+✅ **Asset versioning** (cache busting with ?v=timestamp)
 
 ---
 
@@ -449,6 +564,21 @@ $router->post('/your-module/{id}/delete', ['Admin\\YourController', 'destroy'], 
 ✅ Back-to-top button  
 ✅ Newsletter subscription  
 
+### Advanced Features
+✅ Global search with FULLTEXT and AJAX live results  
+✅ Lead capture & CRM with scoring and pipeline  
+✅ Email system with templates, queue, and unsubscribe  
+✅ Payment integration (Stripe + PayPal)  
+✅ License key generation and validation API  
+✅ Secure download system with tokenization  
+✅ Live chat (Tawk.to/Crisp/WhatsApp)  
+✅ Analytics dashboard with conversion funnel  
+✅ Complete SEO (Schema.org, sitemap, Open Graph)  
+✅ Multi-language with RTL support  
+✅ Backup system (database + files)  
+✅ Security hardening (honeypot, reCAPTCHA, headers)  
+✅ Performance optimization (caching, compression, CDN)  
+
 ---
 
 ## 📚 Documentation
@@ -461,11 +591,12 @@ All code is fully documented with:
 
 Browse the interactive documentation site to explore:
 - **Project Structure** - Complete folder tree
-- **Database Schema** - All 35+ tables with relationships
+- **Database Schema** - All 40+ tables with relationships
 - **Source Code** - Core framework files
 - **Admin Panel** - Admin controllers and views
 - **Admin CRUD** - All 19 admin modules
 - **Frontend** - Public-facing pages
+- **Advanced Features** - Search, Email, Payments, Security, Performance, i18n
 
 ---
 
