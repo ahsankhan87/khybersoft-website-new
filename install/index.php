@@ -8,9 +8,24 @@ declare(strict_types=1);
 
 session_start();
 
+function projectBasePath(): string {
+    $requestPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
+    $basePath = preg_replace('#/index\.php$#', '', $requestPath);
+    $basePath = preg_replace('#/install/?$#', '', $basePath);
+    $basePath = rtrim($basePath, '/');
+
+    return $basePath !== '' ? $basePath : '/';
+}
+
+function redirectTo(string $path): void {
+    $basePath = projectBasePath();
+    $target = $basePath === '/' ? $path : $basePath . $path;
+    header('Location: ' . $target);
+}
+
 // Check if already installed
 if (file_exists(__DIR__ . '/../.env') && !isset($_GET['force'])) {
-    header('Location: /');
+    redirectTo('/');
     exit('Already installed. Add ?force=1 to reinstall.');
 }
 
@@ -36,12 +51,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
         case 'test_database':
             $host = $_POST['db_host'] ?? 'localhost';
+            $port = (int)($_POST['db_port'] ?? 3306);
             $name = $_POST['db_name'] ?? '';
             $user = $_POST['db_user'] ?? '';
             $pass = $_POST['db_pass'] ?? '';
             
             try {
-                $pdo = new PDO("mysql:host=$host", $user, $pass);
+                $dsn = "mysql:host=$host;port=$port";
+                $pdo = new PDO($dsn, $user, $pass);
                 $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
                 
                 // Create database if not exists
@@ -49,6 +66,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 $_SESSION['db_config'] = [
                     'host' => $host,
+                    'port' => $port,
                     'name' => $name,
                     'user' => $user,
                     'pass' => $pass,
@@ -69,7 +87,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             try {
                 $db = $_SESSION['db_config'];
-                $pdo = new PDO("mysql:host={$db['host']};dbname={$db['name']}", $db['user'], $db['pass']);
+                $pdo = new PDO("mysql:host={$db['host']};port={$db['port']};dbname={$db['name']}", $db['user'], $db['pass']);
                 $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
                 
                 // Import schema
@@ -96,6 +114,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             $db = $_SESSION['db_config'];
             $appKey = bin2hex(random_bytes(32));
+            $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || ($_SERVER['SERVER_PORT'] ?? 443) == 443 ? 'https' : 'http';
+            $siteUrl = $scheme . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost') . projectBasePath();
             
             $envContent = <<<ENV
 # Khybersoft Environment Configuration
@@ -107,12 +127,13 @@ APP_KEY=$appKey
 
 # Database
 DB_HOST={$db['host']}
+DB_PORT={$db['port']}
 DB_NAME={$db['name']}
 DB_USER={$db['user']}
 DB_PASS={$db['pass']}
 
 # Site
-SITE_URL=https://{$_SERVER['HTTP_HOST']}
+SITE_URL={$siteUrl}
 SITE_NAME=Khybersoft
 
 # Email (configure later)
@@ -156,7 +177,7 @@ ENV;
             
             try {
                 $db = $_SESSION['db_config'];
-                $pdo = new PDO("mysql:host={$db['host']};dbname={$db['name']}", $db['user'], $db['pass']);
+                $pdo = new PDO("mysql:host={$db['host']};port={$db['port']};dbname={$db['name']}", $db['user'], $db['pass']);
                 
                 $hash = password_hash($password, PASSWORD_BCRYPT, ['cost' => 12]);
                 
@@ -192,7 +213,7 @@ ENV;
             }
             rmdir($installDir);
             
-            header('Location: /admin');
+            redirectTo('/admin');
             exit;
             break;
     }
@@ -315,6 +336,11 @@ $allPassed = !empty($requirements) && array_reduce($requirements, fn($carry, $re
                 <div>
                     <label class="block text-sm font-medium text-slate-300 mb-2">Database Host</label>
                     <input type="text" name="db_host" value="localhost" required class="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-xl text-white focus:outline-none focus:border-indigo-500">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-2">Database Port</label>
+                    <input type="number" name="db_port" value="3307" min="1" max="65535" required class="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-xl text-white focus:outline-none focus:border-indigo-500">
                 </div>
                 
                 <div>
