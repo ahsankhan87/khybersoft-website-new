@@ -19,6 +19,11 @@ import { uiComponents } from './data/uiComponents';
 import { uiPolish } from './data/uiPolish';
 import { deploymentFiles } from './data/deploymentFiles';
 import { spamProtectionFiles } from './data/spamProtection';
+import { ci4ControllersFront } from './data/ci4ControllersFront';
+import { ci4ControllersAdmin } from './data/ci4ControllersAdmin';
+import { ci4Models } from './data/ci4Models';
+import { ci4Config } from './data/ci4Config';
+import { ci4ViewsFrontend, ci4ViewsAdmin } from './data/ci4Views';
 import { AdminPanelPreview } from './components/AdminPreview';
 import {
   FolderTree,
@@ -40,7 +45,7 @@ import {
   LayoutDashboard,
 } from 'lucide-react';
 
-type Tab = 'structure' | 'database' | 'code' | 'admin' | 'crud' | 'frontend' | 'advanced' | 'ui' | 'deployment' | 'security';
+type Tab = 'structure' | 'database' | 'code' | 'admin' | 'crud' | 'frontend' | 'advanced' | 'ui' | 'deployment' | 'security' | 'ci4';
 
 interface TreeNode {
   name: string;
@@ -1183,6 +1188,158 @@ function DeploymentView() {
   );
 }
 
+function CI4View() {
+  const [selectedCategory, setSelectedCategory] = useState('Frontend Controllers');
+  const allCI4Files = [...ci4ControllersFront, ...ci4ControllersAdmin, ...ci4Models, ...ci4Config, ...ci4ViewsFrontend, ...ci4ViewsAdmin];
+  const [selectedFile, setSelectedFile] = useState(allCI4Files[0]?.path || '');
+
+  const categories = useMemo(() => {
+    const cats = new Set(allCI4Files.map(f => f.category));
+    return Array.from(cats);
+  }, []);
+
+  const categoryFiles = allCI4Files.filter(f => f.category === selectedCategory);
+  const currentFile = allCI4Files.find(f => f.path === selectedFile) || categoryFiles[0];
+
+  const categoryDescriptions: Record<string, string> = {
+    'Frontend Controllers': 'Public-facing controllers (Home, Products, Blog, etc.)',
+    'Admin Controllers': 'Admin panel controllers (Auth, Dashboard, CRUD)',
+    'Models': 'Database models with relationships and helpers',
+    'Config': 'CI4 configuration files (Routes, Database, Email, Filters)',
+    'Frontend Views': 'Public page views with TailwindCSS',
+    'Admin Views': 'Admin panel views with dashboard and forms',
+  };
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-bold text-white">🚀 CodeIgniter 4 Implementation</h2>
+        <p className="text-slate-400 mt-1">Complete CI4 application with controllers, models, views, and configuration</p>
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-4">
+          <div className="text-2xl font-bold text-blue-400">{ci4ControllersFront.length + ci4ControllersAdmin.length}</div>
+          <div className="text-xs text-slate-400 mt-1">Controllers</div>
+        </div>
+        <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-4">
+          <div className="text-2xl font-bold text-purple-400">{ci4Models.length}</div>
+          <div className="text-xs text-slate-400 mt-1">Models</div>
+        </div>
+        <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-4">
+          <div className="text-2xl font-bold text-green-400">{ci4ViewsFrontend.length + ci4ViewsAdmin.length}</div>
+          <div className="text-xs text-slate-400 mt-1">Views</div>
+        </div>
+        <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-4">
+          <div className="text-2xl font-bold text-amber-400">{ci4Config.length}</div>
+          <div className="text-xs text-slate-400 mt-1">Config Files</div>
+        </div>
+      </div>
+
+      {/* Category Grid */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        {categories.map(cat => {
+          const count = allCI4Files.filter(f => f.category === cat).length;
+          return (
+            <button
+              key={cat}
+              onClick={() => { setSelectedCategory(cat); setSelectedFile(allCI4Files.find(f => f.category === cat)?.path || ''); }}
+              className={`p-3 rounded-xl border text-left transition-all ${
+                selectedCategory === cat
+                  ? 'bg-blue-600/20 border-blue-500/50 text-blue-300'
+                  : 'bg-slate-800/50 border-slate-700 text-slate-400 hover:border-slate-600 hover:text-slate-200'
+              }`}
+            >
+              <div className="text-lg font-bold">{count}</div>
+              <div className="text-xs truncate">{cat}</div>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Category Detail */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        {/* File List */}
+        <div className="lg:col-span-1 bg-slate-800/50 border border-slate-700 rounded-xl p-4 max-h-[600px] overflow-y-auto">
+          <h3 className="text-sm font-semibold text-blue-400 mb-1">{selectedCategory}</h3>
+          <p className="text-xs text-slate-500 mb-3">{categoryDescriptions[selectedCategory] || ''}</p>
+          <div className="space-y-1">
+            {categoryFiles.map(file => (
+              <button
+                key={file.path}
+                onClick={() => setSelectedFile(file.path)}
+                className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
+                  selectedFile === file.path
+                    ? 'bg-blue-600/20 text-blue-300 border border-blue-500/30'
+                    : 'text-slate-400 hover:bg-slate-700/50 hover:text-slate-200'
+                }`}
+              >
+                <div className="font-mono text-xs truncate">{file.name}</div>
+                <div className="text-xs text-slate-500 truncate mt-0.5">{file.description}</div>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Code Display */}
+        <div className="lg:col-span-3">
+          {currentFile && (
+            <div className="space-y-3">
+              <div>
+                <h3 className="text-lg font-semibold text-white">{currentFile.name}</h3>
+                <p className="text-sm text-slate-400 mt-1">{currentFile.description}</p>
+                <p className="text-xs text-slate-500 mt-1 font-mono">{currentFile.path}</p>
+              </div>
+              <div className="bg-slate-900 border border-slate-700 rounded-xl overflow-hidden">
+                <div className="flex items-center justify-between px-4 py-2 bg-slate-800 border-b border-slate-700">
+                  <span className="text-xs text-slate-400 font-mono">{currentFile.language}</span>
+                  <button
+                    onClick={() => navigator.clipboard.writeText(currentFile.content)}
+                    className="text-xs text-slate-400 hover:text-white transition-colors flex items-center gap-1"
+                  >
+                    <Copy size={12} /> Copy
+                  </button>
+                </div>
+                <pre className="p-4 overflow-x-auto text-sm">
+                  <code className="text-slate-300">{currentFile.content}</code>
+                </pre>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* CI4 Features */}
+      <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
+        <h3 className="text-lg font-semibold text-white mb-4">🎯 CodeIgniter 4 Features</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <h4 className="text-sm font-semibold text-blue-400 mb-2">Architecture</h4>
+            <ul className="space-y-1 text-sm text-slate-300">
+              <li>✓ MVC pattern with namespaced controllers</li>
+              <li>✓ Model-View separation with layouts</li>
+              <li>✓ RESTful routing with groups</li>
+              <li>✓ CSRF protection on all forms</li>
+              <li>✓ Session-based authentication</li>
+            </ul>
+          </div>
+          <div>
+            <h4 className="text-sm font-semibold text-blue-400 mb-2">Security</h4>
+            <ul className="space-y-1 text-sm text-slate-300">
+              <li>✓ Password hashing with bcrypt</li>
+              <li>✓ Rate limiting on login attempts</li>
+              <li>✓ Remember me with secure tokens</li>
+              <li>✓ Input validation on all forms</li>
+              <li>✓ SQL injection prevention</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function SecurityView() {
   const [selectedCategory, setSelectedCategory] = useState('Core');
   const [selectedFile, setSelectedFile] = useState(spamProtectionFiles[0]?.path || '');
@@ -1415,6 +1572,7 @@ function App() {
     { id: 'ui' as Tab, label: 'UI Components', icon: Check },
     { id: 'deployment' as Tab, label: 'Deployment', icon: Download },
     { id: 'security' as Tab, label: 'Spam Protection', icon: Shield },
+    { id: 'ci4' as Tab, label: 'CodeIgniter 4', icon: Server },
   ];
 
   const features = [
@@ -1586,6 +1744,7 @@ function App() {
         {activeTab === 'ui' && <UIComponentsView />}
         {activeTab === 'deployment' && <DeploymentView />}
         {activeTab === 'security' && <SecurityView />}
+        {activeTab === 'ci4' && <CI4View />}
       </main>
 
       {/* Footer */}
